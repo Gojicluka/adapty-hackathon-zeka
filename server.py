@@ -89,8 +89,12 @@ DATA_DIR = Path(ENV.get("DATA_DIR") or ROOT)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / ("index-mock.db" if ADAPTY.mock else "index.db")
 ADMIN_PASSWORD = ENV.get("ADMIN_PASSWORD", "")
-WEBHOOK_SECRET = ENV.get("WEBHOOK_SECRET", "")
 TOKEN_KEY = hashlib.sha256(("lumen-token:" + (ENV.get("ADAPTY_SECRET_KEY") or "mock")).encode()).digest()
+# The value Adapty must send in the webhook's Authorization header. Set WEBHOOK_SECRET to choose one;
+# otherwise it is derived from the Adapty secret key, so no extra setting is needed.
+WEBHOOK_SECRET = ENV.get("WEBHOOK_SECRET") or (
+    "" if ADAPTY.mock else "whsec_" + hmac.new(TOKEN_KEY, b"adapty-webhook", hashlib.sha256).hexdigest()[:32])
+WEBHOOK_FALLBACK_SECONDS = 25
 LOCK = threading.RLock()
 USER_LOCKS = {}
 
@@ -447,6 +451,16 @@ def purchase(cuid, product):
     event("purchase", f"{name_of(cuid, attrs)} subscribed: {product} (${PRODUCTS[product]:.2f}) on "
           f"{'Google Play' if platform == 'Android' else 'App Store'}, recorded in Adapty")
     if WEBHOOK_SECRET:
+        # Adapty's webhook normally rewards the inviter within seconds. If it hasn't after a short wait,
+        # do it here; the friend's referral_reward_paid attribute makes sure it happens only once.
+        def fallback():
+            time.sleep(WEBHOOK_FALLBACK_SECONDS)
+            try:
+                if handle_first_payment(cuid, "fallback (no webhook yet)"):
+                    print(f"Webhook fallback rewarded the inviter of {cuid}", flush=True)
+            except Exception as e:
+                print(f"Webhook fallback failed for {cuid}: {e}", flush=True)
+        threading.Thread(target=fallback, daemon=True).start()
         return {"recorded": True, "reward": "pending", "note": "Adapty's webhook will reward the inviter"}
     return {"recorded": True, "actions": handle_first_payment(cuid, "purchase")}
 
@@ -849,6 +863,9 @@ def main():
     port = int(ENV.get("PORT", 8080))
     print(f"Lumen Referrals on http://0.0.0.0:{port}  mode={'MOCK' if ADAPTY.mock else 'LIVE'}"
           f"  webhook={'on' if WEBHOOK_SECRET else 'off'}  admin={'password' if ADMIN_PASSWORD else 'open'}", flush=True)
+    if WEBHOOK_SECRET and not ENV.get("WEBHOOK_SECRET"):
+        print(f"Adapty webhook setup: endpoint <this site>/webhooks/adapty, Authorization header value {WEBHOOK_SECRET}",
+              flush=True)
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
 
 
