@@ -4,6 +4,13 @@ A user taps **Refer a friend**, the phone's share sheet sends a link, and the fr
 
 Adapty has no referral feature, but its docs describe the grant-access endpoint as handy "if you have bonuses for referrals". This project adds the missing layer and keeps **Adapty as the system of record**: this service only holds a throwaway index of who used the demo, because Adapty's API can't list profiles.
 
+## For the team
+
+- **Agents (Codex, Claude Code):** start with [`AGENTS.md`](AGENTS.md) (Claude Code reads it through [`CLAUDE.md`](CLAUDE.md)).
+- **Docs:** [architecture](docs/ARCHITECTURE.md) · [Adapty setup and IDs](docs/ADAPTY_SETUP.md) · [environment, secrets, deploys](docs/OPERATIONS.md) · [demo guide](docs/DEMO.md).
+- **Deploys:** merge to `main`; GitHub Actions tests and redeploys Render. No Render login needed.
+- **Check everything works:** `python3 server.py` then `python3 scripts/smoke_test.py`.
+
 ## How it uses Adapty
 
 | Step | Adapty feature |
@@ -66,7 +73,7 @@ python3 server.py        # http://localhost:8080
 
 ## Deploy on Render
 
-`render.yaml` sets up a free web service; fill in `ADAPTY_SECRET_KEY` and `ADMIN_PASSWORD`. The free plan sleeps after 15 minutes without visits and doesn't keep its disk, so the demo's **index** resets on sleep or redeploy; Adapty keeps all profiles, attributes, purchases and the program. Ping `/healthz` every 10 minutes during the event to keep it awake.
+Pushing to `main` deploys: `.github/workflows/deploy.yml` compiles, runs the smoke test in mock mode, then calls Render's deploy hook (repo secret `RENDER_DEPLOY_HOOK_URL`). Setup and secrets: [docs/OPERATIONS.md](docs/OPERATIONS.md). `render.yaml` documents the service. The free plan sleeps after 15 minutes without visits and doesn't keep its disk, so the demo's **index** resets on sleep or deploy; Adapty keeps all profiles, attributes, purchases and the program.
 
 ## Demo script (about 3 minutes)
 

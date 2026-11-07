@@ -1,0 +1,64 @@
+# AGENTS.md: guide for coding agents (Codex, Claude Code, others)
+
+Team Zeka, Adapty Hackathon Belgrade, 7–8 November 2026. Code freeze **Sunday 8 November, 15:00**; demos at 15:30.
+
+## What this is
+
+**Referral programs on Adapty.** A user taps *Refer a friend*, shares a link, the friend installs through it; both get rewards and referral data on their **Adapty profiles**, the **app owner** configures the rules, and Adapty **segments** on that data pick each user's paywall.
+
+- Live demo: https://lumen-referrals.onrender.com (`/app` phone app, `/dashboard` owner view, password-protected)
+- Adapty app: **"Teodor sandbox (test)"** (`979a0845-3ddd-4cf9-8fcf-739dd33acf4d`) in the team's Adapty company. **Never point this at the "Lumen - AI Photo Editor (Hackathon)" app** — that's the seeded demo data the team shares.
+
+## The one design rule
+
+**Adapty is the system of record.** Profiles, referral attributes, rewards (access levels), purchases (transactions), paywall choice (segments + placement), paywall copy (remote config) and even the owner's program (remote config of the paywall "Referral program settings") live in Adapty. This server only keeps a throwaway SQLite index (who used the demo, invite clicks, activity log) because Adapty's API can't list profiles. If you add a feature, put its state in Adapty first.
+
+## Map
+
+| File | What |
+|---|---|
+| `server.py` | HTTP server, identity, rules engine, webhook handler, admin API (Python stdlib only) |
+| `adapty_client.py` | Adapty server-side + web API client, device detection, mock mode |
+| `static/app.html` | The phone app (installable web app; real share sheet over HTTPS) |
+| `static/dashboard.html` | Owner dashboard styled as a proposed *Referrals* section of Adapty |
+| `static/invite.html` | Invite landing page `/r/<CODE>` |
+| `static/lumen.apk`, `static/assetlinks.json` | Android wrapper of `/app` (PWABuilder) and its Digital Asset Links |
+| `scripts/smoke_test.py` | End-to-end check of signup → referral → purchase → reward |
+| `render.yaml` | Render service definition |
+| `.github/workflows/deploy.yml` | CI: compile + smoke test in mock mode, then trigger the Render deploy on `main` |
+| `docs/` | Architecture, Adapty setup, operations & secrets, demo script |
+
+Read `docs/ARCHITECTURE.md` before changing flows, `docs/ADAPTY_SETUP.md` before touching anything in Adapty.
+
+## Run, test, deploy
+
+```bash
+python3 server.py                                  # mock mode (no keys needed), http://localhost:8080
+python3 scripts/smoke_test.py http://localhost:8080 # must print "ALL CHECKS PASSED"
+```
+
+- **Live mode locally:** put the sandbox app's secret key in `.env` (see `docs/OPERATIONS.md`). Local servers don't receive Adapty's webhook; inviter rewards then come from the 25-second fallback.
+- **Deploy:** push (or merge a PR) to `main`. GitHub Actions runs the checks and triggers Render. Nobody needs a Render login. A deploy **wipes the demo's local index** (users list on the dashboard, clicks, activity); everything in Adapty stays.
+- **No dependencies.** Keep it standard-library Python and plain HTML/JS: no build step, no `pip install`, no npm.
+
+## Rules for agents
+
+1. **Never commit secrets** (`.env`, Adapty secret key, admin password, deploy hook URL, the Android signing key). The repo is **public**. The public SDK key in `render.yaml` is fine.
+2. **Only the sandbox app.** Don't create, change or delete anything in the Lumen app.
+3. **Ask a human before irreversible Adapty actions:** stopping or starting A/B tests (can't be undone), deleting segments/paywalls/attributes/profiles, changing the live placement's audiences, changing the webhook integration. Writes that remove or replace an A/B-test audience entry **stop that test**.
+4. **Adapty quirks that already bit us** (details in `docs/ADAPTY_SETUP.md`):
+   - Number attributes must be sent as floats (`3.0`), or the whole profile write fails.
+   - `installation_meta.device_id` must be a UUID.
+   - Custom attributes need to be **registered** in the dashboard to appear in the segment editor; string attributes need a fixed value list; keys ≤ 30 chars, values ≤ 50, max 30 per profile. Registered keys/types can't be edited.
+   - A paywall that has been live can't be edited ("not in a draft state"): create a new one and swap it on the placement.
+   - Adapty's Profiles list and charts lag; search by email/customer user ID is immediate.
+5. **Customer user IDs are derived from the email** (`lumen_<8 hex>`), referral codes are `NAME-<same 8 hex>`. Changing either scheme orphans every existing profile — don't.
+6. **Purchases are demo transactions** (no real payment), but they count as revenue in the sandbox app. Keep test purchases few.
+7. **Hackathon rules:** code must be written during the event (it was, 7–8 Nov); only demo/synthetic data; no load tests or scraping of Adapty's APIs; keep secrets in `.env`.
+8. Before pushing: `python3 -m py_compile server.py adapty_client.py` and the smoke test against a local mock server. Small commits, clear messages.
+
+## Adapty tools for agents
+
+- **Adapty CLI:** `npm install -g adapty@latest`, then `adapty auth login` with your own Adapty account (invited to the team company). Useful: `adapty apps list`, `adapty paywalls list --app <id>`, `adapty placements get --app <id> <placement-id> --json`, `adapty segments list --app <id>`.
+- **Adapty skills + MCP** (Claude Code; Codex/Gemini via `npx skills@1.7.0 add adaptyteam/adapty-skills --all --global`): `adapty skills install --agent claude-code`, and the MCP server `https://mcp.adapty.io/mcp` (OAuth sign-in). The skills hold Adapty's own workflows for A/B tests, segments, flows and docs lookup.
+- Adapty docs for agents: add `.md` to any docs URL; indexes at `https://adapty.io/docs/api-llms.txt` (APIs/CLI) and `https://adapty.io/docs/tutorial-llms.txt` (dashboard features).
