@@ -79,7 +79,14 @@ class AdaptyClient:
 
     @staticmethod
     def _attrs(attrs):
-        return [{"key": k, "value": v} for k, v in attrs.items()]
+        """Adapty takes string or float values; whole numbers must be sent as floats (3 -> 3.0)."""
+        def norm(v):
+            if isinstance(v, bool):
+                return "yes" if v else "no"
+            if isinstance(v, (int, float)):
+                return float(v)
+            return str(v)
+        return [{"key": k, "value": norm(v)} for k, v in attrs.items()]
 
     # ---------- profiles ----------
 
