@@ -8,6 +8,7 @@ import json
 import time
 import urllib.error
 import urllib.request
+import uuid
 from collections import deque
 from datetime import datetime, timedelta, timezone
 
@@ -66,12 +67,14 @@ class AdaptyClient:
         except urllib.error.HTTPError as e:
             raw = e.read().decode(errors="replace")
             self._log(method, path, e.code, raw[:160])
+            print(f"Adapty {method} {path} -> {e.code}: {raw[:400]}", flush=True)
             try:
                 return e.code, json.loads(raw)
             except ValueError:
                 return e.code, {"raw": raw[:500]}
         except (urllib.error.URLError, TimeoutError) as e:
             self._log(method, path, 0, f"network: {e}")
+            print(f"Adapty {method} {path} -> network error: {e}", flush=True)
             return 0, {"error": str(e)}
 
     @staticmethod
@@ -89,7 +92,7 @@ class AdaptyClient:
             "email": email,
             "custom_attributes": self._attrs(attrs),
             "installation_meta": {
-                "device_id": f"referral-demo-{user_id}",
+                "device_id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"lumen-referrals/{user_id}")),
                 "device": "Referral demo (web)",
                 "locale": "en",
                 "os": "Web",
