@@ -1,4 +1,4 @@
-# Referral programs on Adapty
+# adapty-hackathon-zeka: referral programs on Adapty
 
 A user taps **Refer a friend**, the phone's share sheet sends a link, and the friend installs through it. Both users get referral data on their **Adapty profiles**, the **app owner decides the rewards**, and Adapty segments on that data so referred users, top referrers and tiers can each get their own paywall.
 
