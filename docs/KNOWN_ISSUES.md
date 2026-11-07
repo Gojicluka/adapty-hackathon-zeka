@@ -37,7 +37,7 @@ Read this before building on the project. Ordered roughly by how likely it is to
 
 ## Hosting
 
-- **Render free plan sleeps** after 15 minutes idle (first request ~50 s) and wipes the index. Teodor's PC pings `/healthz` every 10 minutes only while it's on; add another uptime pinger if needed.
+- **Render free plan sleeps** after 15 minutes idle (first request ~50 s) and wipes the index. A GitHub Actions schedule pings `/healthz` every 10 minutes (plus Teodor's PC as a backup); GitHub can delay scheduled runs, so a rare cold start is still possible.
 - **Env vars, logs and the deploy hook are in Teodor's Render account.** Changes there go through him.
 - **The service worker caches the app shell.** It's network-first, but after big `app.html` changes a phone may need a reload or two (or remove the installed app and add it again).
 - **`localhost:8080` after the local server stops** still shows the cached app shell, and every action fails with "Failed to fetch". Start the server or use the live URL.
