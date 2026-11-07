@@ -824,13 +824,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def _webhook(self):
         """Adapty's webhook. Always answers 2xx so Adapty keeps delivering; rewards run in the background."""
-        if WEBHOOK_SECRET and not hmac.compare_digest(self.headers.get("Authorization", ""), WEBHOOK_SECRET):
-            return self._send(401, {"error": "bad authorization"})
         try:
             body = self._body()
         except Problem:
             body = {}
         etype, cuid = body.get("event_type"), body.get("customer_user_id")
+        if not etype:  # Adapty's verification request is an empty JSON object: just confirm
+            event("webhook", "Adapty webhook connected (verification request)")
+            return self._send(200, {"ok": True})
+        if WEBHOOK_SECRET and not hmac.compare_digest(self.headers.get("Authorization", ""), WEBHOOK_SECRET):
+            print(f"Webhook {etype} rejected: wrong Authorization header", flush=True)
+            return self._send(401, {"error": "bad authorization"})
         if etype:
             event("webhook", f"Adapty webhook: {etype} for {name_of(cuid) if cuid else 'unknown user'}")
         if etype in FIRST_PAYMENT_EVENTS and cuid:
