@@ -6,6 +6,7 @@ Every call is recorded in CALL_LOG so the dashboard can show what reached Adapty
 
 import ipaddress
 import json
+import re
 import secrets
 import time
 import urllib.error
@@ -16,21 +17,44 @@ from datetime import datetime, timedelta, timezone
 
 API = "https://api.adapty.io/api/v2"
 CALL_LOG = deque(maxlen=60)
-PLATFORM = "iOS"
-STORE = "app_store"
+STORES = {"iOS": "app_store", "Android": "play_store"}
+
+
+def device_from_ua(ua):
+    """Platform, OS and device for an Adapty profile, from the phone's browser user agent."""
+    ua = ua or ""
+    if "Android" in ua:
+        inside = ua[ua.find("(") + 1:ua.find(")")] if "(" in ua else ""
+        parts = [x.strip() for x in inside.split(";")]
+        ver, model = "", ""
+        for i, part in enumerate(parts):
+            if part.startswith("Android"):
+                ver = part[len("Android"):].strip()
+                for cand in parts[i + 1:]:
+                    cand = cand.split(" Build/")[0].strip()
+                    if cand and cand not in ("wv", "K") and not cand.startswith(("Build", "Mobile")):
+                        model = cand
+                        break
+                break
+        return {"platform": "Android", "os": f"Android {ver}".strip(), "device": model or "Android phone"}
+    m = re.search(r"(?:iPhone|CPU) OS (\d+)[_.]?(\d+)?", ua)
+    device = "iPad" if "iPad" in ua else "iPhone"
+    return {"platform": "iOS", "os": f"iOS {m.group(1)}{'.' + m.group(2) if m and m.group(2) else ''}" if m else "iOS",
+            "device": device}
 
 # The sandbox app's products (store ids as created in Adapty) and their demo prices.
 PRODUCTS = {
-    "monthly": {"store_product_id": "sandbox.monthly", "price": 9.99, "days": 30, "label": "Monthly"},
-    "annual": {"store_product_id": "sandbox.annual", "price": 59.99, "days": 365, "label": "Annual"},
+    "monthly": {"store_product_id": "lumen.demo.monthly", "base_plan_id": "monthly", "price": 9.99, "days": 30, "label": "Monthly"},
+    "annual": {"store_product_id": "lumen.demo.annual", "base_plan_id": "annual", "price": 59.99, "days": 365, "label": "Annual"},
 }
 BY_STORE_ID = {p["store_product_id"]: k for k, p in PRODUCTS.items()}
+BY_STORE_ID.update({"sandbox.monthly": "monthly", "sandbox.annual": "annual"})  # older iOS-only products
 
 # Remote configs the service writes once to the paywalls, so their copy lives in Adapty.
 DEFAULT_REMOTE_CONFIGS = {
-    "Referral welcome": {"title": "A gift from your friend", "subtitle": "You were invited, so you get our best plan first.",
+    "Referral welcome (iOS + Android)": {"title": "A gift from your friend", "subtitle": "You were invited, so you get our best plan first.",
                          "highlight": "annual", "badge": "Friends price", "cta": "Claim my offer"},
-    "Paywall A - monthly first": {"title": "Unlock Premium", "subtitle": "Unlimited AI edits, no watermark, every filter.",
+    "Paywall A (iOS + Android)": {"title": "Unlock Premium", "subtitle": "Unlimited AI edits, no watermark, every filter.",
                                   "highlight": "monthly", "badge": "Most popular", "cta": "Continue"},
     "Paywall B - annual first": {"title": "Go Premium for a year", "subtitle": "Our best value: every feature, all year.",
                                  "highlight": "annual", "badge": "Best value", "cta": "Continue"},
@@ -65,12 +89,12 @@ class AdaptyClient:
         CALL_LOG.appendleft({"at": _now().strftime("%H:%M:%S"), "method": method, "path": path,
                              "status": status, "note": note, "mock": self.mock})
 
-    def _request(self, method, path, body=None, user_id=None, key=None, note=""):
+    def _request(self, method, path, body=None, user_id=None, key=None, note="", platform=None):
         headers = {"Authorization": f"Api-Key {key or self.secret_key}", "Content-Type": "application/json",
                    "Accept": "application/json"}
         if user_id:
             headers["adapty-customer-user-id"] = user_id
-            headers["adapty-platform"] = PLATFORM
+            headers["adapty-platform"] = platform or "iOS"
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(f"{API}{path}", data=data, method=method, headers=headers)
         started = time.time()
@@ -109,18 +133,19 @@ class AdaptyClient:
 
     # ---------- profiles ----------
 
-    def create_profile(self, user_id, email, name, attrs, ip=None):
-        """Create a full iOS profile. Returns (ok, {"profile_id": ...})."""
+    def create_profile(self, user_id, email, name, attrs, ip=None, device=None):
+        """Create a profile with the phone's real platform. Returns (ok, {"profile_id": ...})."""
+        device = device or {"platform": "iOS", "os": "iOS", "device": "iPhone"}
         if self.mock:
             pid = str(uuid.uuid4())
-            self._mock_profiles[user_id] = {"attrs": dict(attrs), "access": [], "profile_id": pid}
-            self._log("POST", "/server-side-api/profile/", 201, f"mock: {user_id}")
+            self._mock_profiles[user_id] = {"attrs": dict(attrs), "access": [], "profile_id": pid, "subs": [], "revenue": 0.0}
+            self._log("POST", "/server-side-api/profile/", 201, f"mock: {user_id} ({device['platform']})")
             return True, {"profile_id": pid}
         body = {
-            "email": email, "first_name": name, "store": STORE,
+            "email": email, "first_name": name, "store": STORES[device["platform"]],
             "custom_attributes": self._attrs(attrs),
-            "installation_meta": {"device_id": device_uuid(user_id), "device": "iPhone", "locale": "en",
-                                  "os": "iOS 18", "platform": PLATFORM, "timezone": "Europe/Belgrade",
+            "installation_meta": {"device_id": device_uuid(user_id), "device": device["device"], "locale": "en",
+                                  "os": device["os"], "platform": device["platform"], "timezone": "Europe/Belgrade",
                                   "app_build": "1", "app_version": "1.0.0"},
         }
         try:
@@ -128,7 +153,8 @@ class AdaptyClient:
                 body["ip_v4_address"] = ip
         except ValueError:
             pass
-        status, data = self._request("POST", "/server-side-api/profile/", body, user_id=user_id)
+        status, data = self._request("POST", "/server-side-api/profile/", body, user_id=user_id,
+                                     platform=device["platform"], note=device["platform"])
         d = self._data(data) if isinstance(data, dict) else {}
         return 200 <= status < 300, {"profile_id": d.get("profile_id") if isinstance(d, dict) else None, "response": data}
 
@@ -142,22 +168,41 @@ class AdaptyClient:
         return 200 <= status < 300, data
 
     def get_profile(self, user_id):
+        """(ok, profile) — ok is False and profile is {"missing": True} when Adapty has no such profile."""
         if self.mock:
             self._log("GET", "/server-side-api/profile/", 200, f"mock: {user_id}")
-            p = self._mock_profiles.get(user_id, {"attrs": {}, "access": []})
-            return True, {"custom_attributes": p["attrs"], "access_levels": p["access"],
-                          "profile_id": p.get("profile_id"), "subscriptions": [], "mock": True}
+            p = self._mock_profiles.get(user_id)
+            if p is None:
+                return False, {"missing": True}
+            return True, {"custom_attributes": dict(p["attrs"]), "access_levels": list(p["access"]),
+                          "profile_id": p.get("profile_id"), "subscriptions": list(p.get("subs", [])),
+                          "total_revenue_usd": p.get("revenue", 0.0), "mock": True}
         status, data = self._request("GET", "/server-side-api/profile/", user_id=user_id)
         if 200 <= status < 300:
             d = self._data(data)
             attrs = {a.get("key"): a.get("value") for a in d.get("custom_attributes") or []}
             levels = [{"access_level_id": a.get("access_level_id"), "expires_at": a.get("expires_at"),
-                       "store_product_id": a.get("store_product_id")} for a in d.get("access_levels") or []]
-            subs = [{"store_product_id": s.get("store_product_id"), "expires_at": s.get("expires_at")}
-                    for s in d.get("subscriptions") or []]
+                       "store_product_id": a.get("store_product_id"), "store": a.get("store")}
+                      for a in d.get("access_levels") or []]
+            subs = [{"store_product_id": s.get("store_product_id"), "expires_at": s.get("expires_at"),
+                     "store": s.get("store"), "is_active": s.get("is_active")} for s in d.get("subscriptions") or []]
             return True, {"custom_attributes": attrs, "access_levels": levels, "subscriptions": subs,
-                          "profile_id": d.get("profile_id"), "total_revenue_usd": d.get("total_revenue_usd")}
+                          "profile_id": d.get("profile_id"), "total_revenue_usd": d.get("total_revenue_usd") or 0}
+        if status == 404:
+            return False, {"missing": True}
         return False, data
+
+    def has_paid_subscription(self, profile):
+        """True when the profile has an active subscription bought in a store (not a granted reward)."""
+        now = _now()
+        for s in profile.get("subscriptions") or []:
+            if s.get("store_product_id") in BY_STORE_ID and s.get("expires_at"):
+                try:
+                    if datetime.fromisoformat(str(s["expires_at"]).replace("Z", "+00:00")) > now:
+                        return True
+                except ValueError:
+                    pass
+        return False
 
     # ---------- rewards ----------
 
@@ -192,14 +237,16 @@ class AdaptyClient:
 
     # ---------- purchases ----------
 
-    def set_transaction(self, user_id, product_key, variation_id=None, country="RS"):
-        """Record a subscription purchase in Adapty: it shows in analytics, the event feed and the profile,
-        and unlocks the product's access level."""
+    def set_transaction(self, user_id, product_key, variation_id=None, platform="iOS", country="RS"):
+        """Record a subscription purchase in Adapty (App Store or Google Play, per the phone). It shows in
+        analytics, the event feed and the profile, unlocks the product's access level and fires webhooks."""
         p = PRODUCTS[product_key]
+        store = STORES.get(platform, "app_store")
         now = _now()
-        tx_id = f"9{int(now.timestamp() * 1000)}{secrets.randbelow(1000):03d}"
+        stamp = f"{int(now.timestamp() * 1000)}{secrets.randbelow(1000):03d}"
+        tx_id = f"9{stamp}" if store == "app_store" else f"GPA.{stamp[:4]}-{stamp[4:8]}-{stamp[8:12]}-{stamp[12:]}"
         body = {
-            "purchase_type": "subscription", "store": STORE, "environment": "Production",
+            "purchase_type": "subscription", "store": store, "environment": "Production",
             "store_product_id": p["store_product_id"], "store_transaction_id": tx_id,
             "store_original_transaction_id": tx_id, "is_family_shared": False,
             "price": {"country": country, "currency": "USD", "value": p["price"]},
@@ -207,26 +254,31 @@ class AdaptyClient:
             "expires_at": _iso(now + timedelta(days=p["days"])), "renew_status": True,
             "variation_id": variation_id, "offer": None, "refunded_at": None, "cancellation_reason": None,
         }
+        if store == "play_store":
+            body["base_plan_id"] = p["base_plan_id"]
         if self.mock:
-            self._mock_profiles.setdefault(user_id, {"attrs": {}, "access": []})["access"].append(
-                {"access_level_id": self.access_level, "expires_at": body["expires_at"]})
-            self._log("POST", "/server-side-api/purchase/set/transaction/", 200, f"mock: {product_key}")
+            m = self._mock_profiles.setdefault(user_id, {"attrs": {}, "access": [], "subs": [], "revenue": 0.0})
+            m["access"].append({"access_level_id": self.access_level, "expires_at": body["expires_at"]})
+            m.setdefault("subs", []).append({"store_product_id": p["store_product_id"], "expires_at": body["expires_at"], "store": store})
+            m["revenue"] = m.get("revenue", 0.0) + p["price"]
+            self._log("POST", "/server-side-api/purchase/set/transaction/", 200, f"mock: {product_key} ({store})")
             return True, {"mock": True}
         status, data = self._request("POST", "/server-side-api/purchase/set/transaction/", body, user_id=user_id,
-                                     note=f"{product_key} ${p['price']}")
+                                     platform=platform, note=f"{product_key} ${p['price']} {store}")
         return 200 <= status < 300, data
 
     # ---------- paywalls (Adapty decides) ----------
 
-    def get_paywall(self, user_id):
+    def get_paywall(self, user_id, platform="iOS"):
         """Ask Adapty which paywall this user gets on the placement, with its remote config."""
         if self.mock or not self.public_key:
-            p = self._mock_profiles.get(user_id, {"attrs": {}})
-            name = self.referred_paywall_title if p["attrs"].get("referral_status") == "referred" else "Paywall A - monthly first"
+            p = self._mock_profiles.get(user_id) or {"attrs": {}}
+            name = self.referred_paywall_title if p["attrs"].get("referral_status") == "referred" else "Paywall A (iOS + Android)"
             self._log("POST", "/web-api/paywall/", 200, f"mock: {name}")
             return True, {"paywall_name": name, "variation_id": None, "remote_config": DEFAULT_REMOTE_CONFIGS.get(name, {}),
                           "products": [{"key": k, **v} for k, v in PRODUCTS.items()], "mock": True}
-        body = {"store": STORE, "locale": "en", "placement_id": self.placement_id, "customer_user_id": user_id}
+        body = {"store": STORES.get(platform, "app_store"), "locale": "en", "placement_id": self.placement_id,
+                "customer_user_id": user_id}
         status, data = self._request("POST", "/web-api/paywall/", body, key=self.public_key)
         if not 200 <= status < 300:
             return False, data
@@ -247,12 +299,13 @@ class AdaptyClient:
                       "variation_id": d.get("variation_id"), "ab_test_name": d.get("ab_test_name"),
                       "remote_config": rc_data or {}, "products": products}
 
-    def record_paywall_view(self, user_id, variation_id):
+    def record_paywall_view(self, user_id, variation_id, platform="iOS"):
         """Log a paywall view so Adapty's paywall and placement metrics count it."""
         if self.mock or not self.public_key or not variation_id:
             self._log("POST", "/web-api/paywall/visit/", 201, "mock")
             return True
-        body = {"visited_at": _iso(_now()), "store": STORE, "variation_id": variation_id, "customer_user_id": user_id}
+        body = {"visited_at": _iso(_now()), "store": STORES.get(platform, "app_store"), "variation_id": variation_id,
+                "customer_user_id": user_id}
         status, _ = self._request("POST", "/web-api/paywall/visit/", body, key=self.public_key)
         return 200 <= status < 300
 
@@ -280,3 +333,36 @@ class AdaptyClient:
             s, _ = self._request("PUT", f"/server-side-api/paywalls/{pid}/", body, note=title)
             done.append(f"{title}: remote config {'set' if 200 <= s < 300 else f'failed ({s})'}")
         return done
+
+    # ---------- the referral program's settings live in Adapty ----------
+
+    def find_paywall_id(self, title):
+        if self.mock:
+            return "mock-settings"
+        status, data = self._request("GET", "/server-side-api/paywalls/?page%5Bsize%5D=100")
+        for pw in (data.get("data", []) if isinstance(data, dict) else []):
+            if pw.get("title") == title:
+                return pw.get("paywall_id")
+        return None
+
+    def read_remote_config(self, paywall_id):
+        """The paywall's English remote config as a dict ({} if none)."""
+        if self.mock:
+            return dict(self._mock_profiles.get("__settings__", {}).get("attrs", {}))
+        status, data = self._request("GET", f"/server-side-api/paywalls/{paywall_id}/")
+        if not 200 <= status < 300:
+            raise RuntimeError(f"could not read paywall {paywall_id} ({status})")
+        for rc in self._data(data).get("remote_configs") or []:
+            if rc.get("locale") == "en":
+                raw = rc.get("data")
+                return json.loads(raw) if isinstance(raw, str) and raw else (raw or {})
+        return {}
+
+    def write_remote_config(self, paywall_id, config, note=""):
+        if self.mock:
+            self._mock_profiles["__settings__"] = {"attrs": dict(config)}
+            self._log("PUT", f"/server-side-api/paywalls/{paywall_id}/", 200, "mock: settings saved")
+            return True
+        body = {"remote_configs": [{"locale": "en", "data": json.dumps(config)}]}
+        status, _ = self._request("PUT", f"/server-side-api/paywalls/{paywall_id}/", body, note=note)
+        return 200 <= status < 300

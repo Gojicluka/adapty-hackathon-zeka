@@ -108,7 +108,7 @@ function render() {
     $("signup").addEventListener("submit", signup);
   } else {
     const inv = me.invited || [];
-    const paidN = inv.filter((i) => i.first_paid_at).length;
+    const paidN = me.referrals_paid || 0;
     root.innerHTML = head + (notice ? `<div class="ok">${notice}</div>` : "") +
       `<div class="card"><h2>Hi, ${esc(me.name)}</h2>
         <p>${me.premium_until ? `Premium until <b>${fmtDate(me.premium_until)}</b>.` : "You’re on the free plan."}${me.invited_by ? ` Invited by ${esc(me.invited_by)}.` : ""}</p>
@@ -116,11 +116,14 @@ function render() {
         <div style="margin-top:12px"><button class="primary" id="upgrade">${me.paid ? "Change plan" : "Go Premium"}</button></div></div>
       <div class="card hero"><h2>Invite friends, get Premium</h2>
         <p>${me.offer.friend_days ? `Friends get <b>${me.offer.friend_days} days</b> free.` : ""} ${me.offer.inviter_days ? `You get <b>${me.offer.inviter_days} days</b> when they subscribe.` : ""}</p>
-        <div class="stats"><div><b>${inv.length}</b><span>invited</span></div><div><b>${paidN}</b><span>subscribed</span></div><div><b>${esc(me.tier)}</b><span>tier</span></div></div>
+        <div class="stats"><div><b>${me.referrals_made || 0}</b><span>invited</span></div><div><b>${paidN}</b><span>subscribed</span></div><div><b>${esc(me.tier)}</b><span>tier</span></div></div>
         <button class="light" id="share">Refer a friend</button>
         <p style="margin:10px 0 0;font-size:13px">Your code: <b>${esc(me.code)}</b></p></div>
-      <div class="card"><h2>Your invites</h2>${inv.length ? `<ul class="list">${inv.map((i) => `<li><span>${esc(i.name)}<br><span class="s">${i.via ? "via " + esc(i.via) : "joined"}</span></span><span class="chip ${i.first_paid_at ? "prem" : ""}">${i.first_paid_at ? "subscribed" : "joined"}</span></li>`).join("")}</ul>` : "<p>No invites yet. Share your link!</p>"}</div>
-      ${me.rewards.length ? `<div class="card"><h2>Rewards</h2><ul class="list">${me.rewards.map((r) => `<li><span>${esc(r.detail)}<br><span class="s">${esc(r.reason)}</span></span></li>`).join("")}</ul></div>` : ""}
+      <div class="card"><h2>Your invites</h2>${inv.length ? `<ul class="list">${inv.map((i) => `<li><span>${esc(i.name)}<br><span class="s">${i.via ? "via " + esc(i.via) : "joined"}</span></span></li>`).join("")}</ul>` : (me.referrals_made ? `<p>${me.referrals_made} friend(s) joined.</p>` : "<p>No invites yet. Share your link!</p>")}</div>
+      ${me.reward_days || me.credit_days ? `<div class="card"><h2>Rewards</h2><ul class="list">
+        ${me.reward_days ? `<li><span>Premium earned from referrals</span><b>${me.reward_days} days</b></li>` : ""}
+        ${me.credit_days ? `<li><span>Credit, added after your current subscription<br><span class="s">you already pay, so Adapty keeps your subscription as is</span></span><b>${me.credit_days} days</b></li>` : ""}
+        </ul></div>` : ""}
       ${installCard()}
       <button class="ghost" id="signout">Sign out (for testing)</button>
       <p class="tiny">Hackathon demo · ${me.mode === "live" ? "connected to Adapty" : "offline mock"} · purchases are simulated</p>`;
@@ -131,14 +134,26 @@ function render() {
   const ib = $("install"); if (ib) ib.addEventListener("click", async () => { installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(); });
 }
 
+async function deviceInfo() {
+  const d = {};
+  try {
+    if (navigator.userAgentData) {
+      const h = await navigator.userAgentData.getHighEntropyValues(["model", "platformVersion"]);
+      if (navigator.userAgentData.platform === "Android") { d.platform = "Android"; d.os = `Android ${String(h.platformVersion || "").split(".")[0]}`.trim(); if (h.model) d.device = h.model; }
+    }
+  } catch {}
+  return d;
+}
+
 async function signup(e) {
   e.preventDefault();
   const btn = e.target.querySelector("button"); btn.disabled = true; btn.textContent = "Creating…";
   try {
-    const r = await api("/api/app/signup", { name:$("n").value, email:$("e").value, ref:ref?.code || null });
+    const r = await api("/api/app/signup", { name:$("n").value, email:$("e").value, ref:ref?.code || null, device:await deviceInfo() });
     token = r.token; store.set("lumen_token", token); store.del("lumen_ref");
     me = await api("/api/app/me");
-    notice = r.referred_by ? `🎉 Welcome! ${esc(r.referred_by)} invited you.${(r.actions || []).filter((a) => a.to === me.name).map((a) => ` You got ${esc(a.detail)}.`).join("")}` : "Welcome to Lumen!";
+    notice = r.existing ? `Welcome back, ${esc(me.name)}! (found your account in Adapty)`
+      : r.referred_by ? `🎉 Welcome! ${esc(r.referred_by)} invited you.${(r.actions || []).filter((a) => a.to === me.name).map((a) => ` You got ${esc(a.detail)}.`).join("")}` : "Welcome to Lumen!";
     render();
   } catch (err) { $("msg").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; btn.textContent = "Create account"; }
 }
@@ -180,7 +195,7 @@ async function openPaywall() {
     bg.querySelector("#buy").addEventListener("click", async (e) => {
       e.target.disabled = true; e.target.textContent = "Processing…";
       try { const r = await api("/api/app/purchase", { product:pick }); me = await api("/api/app/me");
-        notice = "You’re subscribed! (demo purchase, recorded in Adapty)" + (r.actions?.length ? " Your inviter was rewarded." : ""); bg.remove(); render();
+        notice = "You’re subscribed! (demo purchase, recorded in Adapty)" + (r.reward === "pending" && me.invited_by ? ` Adapty will notify us, and ${esc(me.invited_by)} gets rewarded in a few seconds.` : r.actions?.length ? " Your inviter was rewarded." : ""); bg.remove(); render();
       } catch (err) { e.target.disabled = false; e.target.textContent = rc.cta || "Subscribe"; alert(err.message); }
     });
   };

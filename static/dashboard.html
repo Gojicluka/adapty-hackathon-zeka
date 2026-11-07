@@ -120,7 +120,7 @@
       <section id="t-program" hidden>
         <div class="grid2">
           <div>
-            <h3>Rules</h3><p class="sub">What happens when someone refers. Rules run in order; changes apply to new events immediately.</p>
+            <h3>Rules</h3><p class="sub">What happens when someone refers. Saved in Adapty as the remote config of the paywall “Referral program settings” (<a href="https://app.adapty.io/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">open in Adapty ↗</a>), so it can be edited here or there.</p>
             <div id="rules"></div><button class="btn sm" id="add-rule">+ Add rule</button>
             <h3 style="margin-top:22px">Tiers</h3><p class="sub">By paid referrals. Written to the inviter’s profile as <code>referral_tier</code>.</p>
             <div id="tiers"></div><button class="btn sm" id="add-tier">+ Add tier</button>
@@ -155,8 +155,8 @@
           <div><h3>Live in this app</h3><p class="sub">Placement <code id="pl"></code> · <a href="https://app.adapty.io/placements/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">open in Adapty ↗</a> · <a href="https://app.adapty.io/profiles/segments" target="_blank" rel="noopener" style="color:var(--purple)">segments ↗</a> · <a href="https://app.adapty.io/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">paywall remote configs ↗</a></p>
             <table><thead><tr><th>Priority</th><th>Audience</th><th>Shows</th></tr></thead><tbody>
               <tr><td>#1</td><td>Serbia users</td><td>A/B test: monthly-first vs annual-first</td></tr>
-              <tr><td>#2</td><td><b>Referred users</b> <span class="pill">referrals</span></td><td>Referral welcome</td></tr>
-              <tr><td>#3</td><td>All users</td><td>Paywall A - monthly first</td></tr>
+              <tr><td>#2</td><td><b>Referred users</b> <span class="pill">referrals</span></td><td>Referral welcome (iOS + Android)</td></tr>
+              <tr><td>#3</td><td>All users</td><td>Paywall A (iOS + Android)</td></tr>
             </tbody></table>
             <div class="note" style="margin-top:12px">Ideas: give the <code>gold</code> tier an exclusive annual offer, or show a “thanks for sharing” paywall to inviters with <code>referrals_paid ≥ 3</code>.</div></div>
         </div>
@@ -251,7 +251,7 @@ async function profile(id, name) {
 function metric(k, v, s) { return `<div class="card metric"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`; }
 async function refresh() {
   try { S = await api("/api/state"); } catch { return; }
-  $("mode").textContent = S.mode === "live" ? "Connected to Adapty" : "Offline mock"; $("mode").className = "mode " + S.mode;
+  $("mode").textContent = S.mode === "live" ? (S.webhook ? "Connected to Adapty · webhook on" : "Connected to Adapty") : "Offline mock"; $("mode").className = "mode " + S.mode;
   $("pl").textContent = S.placement;
   const r = S.stats.referred, o = S.stats.organic, st = S.stats;
   $("metrics").innerHTML = metric("Links shared", st.shares, "Refer button taps") + metric("Invite opens", st.opens, "invite link visits")
@@ -263,10 +263,10 @@ async function refresh() {
   $("cohorts").innerHTML = [["Referred", r], ["Organic", o]].map(([k, g]) => `<tr><td>${k}</td><td>${g.users}</td><td>${g.paid}</td><td>${g.conversion}%</td><td>${money(g.revenue_per_user)}</td></tr>`).join("");
   $("events").innerHTML = S.events.map((e) => `<li><span class="t">${esc(e.at.slice(11, 16))}</span>${esc(e.text)}</li>`).join("") || '<li class="muted">No activity yet.</li>';
   $("calls").innerHTML = S.calls.map((c) => `<li><span class="t">${esc(c.at)}</span><span class="${c.status >= 200 && c.status < 300 ? "ok" : "bad"}">${c.status || "ERR"}</span> <code>${esc(c.method)} ${esc(c.path)}</code> <span class="muted">${esc(c.note)}</span></li>`).join("") || '<li class="muted">No calls yet.</li>';
-  $("people").innerHTML = S.users.map((u) => `<tr><td><b>${esc(u.name)}</b><br><span class="muted">${esc(u.email)}</span></td><td><code>${esc(u.code)}</code><br><span class="muted">${u.shares} shares · ${u.opens} opens</span></td>
+  $("people").innerHTML = S.users.map((u) => `<tr><td><b>${esc(u.name)}</b> <span class="pill gray">${esc(u.platform || "?")}</span><br><span class="muted">${esc(u.email || "")}</span>${u.premium_until ? `<br><span class="muted">premium until ${esc(u.premium_until.slice(0, 10))}</span>` : ""}</td><td><code>${esc(u.code)}</code><br><span class="muted">${u.shares} shares · ${u.opens} opens</span></td>
       <td>${u.referred_by_name ? `${esc(u.referred_by_name)}${u.via ? `<br><span class="muted">via ${esc(u.via)}</span>` : ""}` : '<span class="pill gray">organic</span>'}</td>
       <td>${u.invited ? `${u.invited} <span class="muted">(${u.invited_paid} paid)</span><br><span class="muted">${esc(u.invited_names)}</span>` : "—"}</td>
-      <td><span class="pill ${u.tier === "none" ? "gray" : ""}">${esc(u.tier)}</span></td><td>${u.reward_days ? u.reward_days + " days" : "—"}</td>
+      <td><span class="pill ${u.tier === "none" ? "gray" : ""}">${esc(u.tier)}</span></td><td>${u.reward_days ? u.reward_days + " days" : "—"}${u.credit_days ? `<br><span class="muted">${u.credit_days} days credit</span>` : ""}</td>
       <td>${u.first_paid_at ? '<span class="pill good">paying</span>' : '<span class="pill gray">free</span>'}</td>
       <td>${u.profile_id ? `<a class="btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="https://app.adapty.io/profiles/users/${encodeURIComponent(u.profile_id)}" target="_blank" rel="noopener">Open in Adapty ↗</a>` : '<span class="muted">not in Adapty</span>'}</td></tr>`).join("") || '<tr><td colspan="8" class="muted">No users yet. Install the app on a phone to start.</td></tr>';
   if (!dirty && !document.activeElement?.closest?.("#t-program")) { program = JSON.parse(JSON.stringify(S.program)); renderProgram(); }
