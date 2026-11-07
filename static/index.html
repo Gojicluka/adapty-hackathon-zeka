@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referrals on Adapty</title>
+<style>
+  :root { --bg:#f4f1ea; --card:#fff; --ink:#14213d; --muted:#5a6478; --line:#dcd6c8; --blue:#1f4fbf; --orange:#b4470e; --good:#1d7a46; --bad:#b3261e; --soft:#eef2fb; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display:flex; align-items:center; gap:14px; padding:12px 24px; background:var(--ink); color:#f4f1ea; flex-wrap:wrap; }
+  header h1 { font-size:19px; margin:0; } header .sub { color:#c9d3e6; font-size:13px; } header .sp { flex:1; }
+  .badge { font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; }
+  .badge.live { background:#d7f5e3; color:#0f5132; } .badge.mock { background:#ffe5cc; color:#7a2e00; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:7px 12px; }
+  button.primary { background:var(--blue); border-color:var(--blue); color:#fff; font-weight:600; }
+  button.small { padding:3px 8px; font-size:13px; } button.link { border:none; background:none; color:var(--blue); padding:0; text-decoration:underline; }
+  button:disabled { opacity:.5; cursor:default; }
+  header button { background:transparent; color:#f4f1ea; border-color:#44506b; }
+  nav.tabs { display:flex; gap:6px; padding:12px 24px 0; flex-wrap:wrap; }
+  nav.tabs button { border-radius:10px 10px 0 0; border-bottom:none; background:#e9e4d8; }
+  nav.tabs button.on { background:var(--card); font-weight:700; }
+  .page { padding:0 24px 24px; } .page > .wrap { background:var(--card); border:1px solid var(--line); border-radius:0 14px 14px 14px; padding:18px; }
+  .grid3 { display:grid; grid-template-columns: 340px 340px 1fr; gap:18px; align-items:start; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
+  @media (max-width:1250px) { .grid3 { grid-template-columns: 1fr 1fr; } .grid3 > .dash { grid-column:1/-1; } }
+  @media (max-width:800px) { .grid3, .grid2 { grid-template-columns:1fr; } .page, nav.tabs { padding-left:16px; padding-right:16px; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; } .card + .card { margin-top:14px; }
+  h2 { font-size:16px; margin:0 0 4px; } h3 { font-size:14px; margin:12px 0 6px; }
+  .hint { color:var(--muted); font-size:13px; margin:0 0 10px; }
+  label { display:block; font-size:13px; font-weight:600; margin:8px 0 4px; }
+  input, select { font:inherit; padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:#fffdf8; color:var(--ink); }
+  input.full { width:100%; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .msg { margin-top:10px; padding:10px 12px; border-radius:10px; font-size:14px; } .msg.err { background:#fde8e6; color:var(--bad); } .msg.ok { background:#e2f4ea; }
+  /* phones */
+  .phone { position:relative; border:3px solid var(--ink); border-radius:30px; padding:14px 14px 18px; background:#fffdf8; min-height:560px; }
+  .phone .bar { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .phone .title { font-weight:700; font-size:15px; text-align:center; margin-bottom:10px; }
+  .sheet { position:absolute; left:8px; right:8px; bottom:8px; background:#f2f2f6; border-radius:18px; padding:14px; box-shadow:0 -6px 24px rgba(20,33,61,.25); }
+  .sheet .apps { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center; font-size:12px; }
+  .sheet .apps button { display:flex; flex-direction:column; align-items:center; gap:4px; border:none; background:none; padding:4px; }
+  .sheet .ic { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; }
+  .bubble { background:#dcf8c6; border-radius:14px; padding:10px 12px; font-size:14px; max-width:92%; }
+  .bubble a, .bubble .link { word-break:break-all; }
+  .store { text-align:center; padding:10px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+  .store .logo { width:64px; height:64px; border-radius:16px; margin:0 auto 6px; background:linear-gradient(135deg,#1f4fbf,#b4470e); color:#fff; font-weight:700; font-size:26px; display:flex; align-items:center; justify-content:center; }
+  .paywall { margin-top:10px; border-radius:14px; padding:12px; background:var(--soft); border:1px solid #cdd8f3; }
+  .paywall.ref { background:#fff2e5; border-color:#f2c29b; } .paywall .name { font-weight:700; font-size:16px; }
+  .stat { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; } .stat div { flex:1; min-width:70px; border:1px solid var(--line); border-radius:10px; padding:6px 8px; }
+  .stat b { display:block; font-size:20px; } .stat span { font-size:12px; color:var(--muted); }
+  .tag { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; background:#eceae4; color:var(--muted); }
+  .tag.ref { background:#fff2e5; color:var(--orange); } .tag.paid { background:#e2f4ea; color:var(--good); } .tag.tier { background:#eef2fb; color:var(--blue); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); padding:6px; border-bottom:1px solid var(--line); }
+  td { padding:7px 6px; border-bottom:1px solid #eee9de; vertical-align:top; }
+  code { font-family:ui-monospace, Menlo, Consolas, monospace; font-size:13px; background:#f1eee6; padding:1px 6px; border-radius:6px; }
+  .tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; } @media (max-width:1250px) { .tiles { grid-template-columns:1fr 1fr; } }
+  .tile { border:1px solid var(--line); border-radius:12px; padding:10px 12px; } .tile .k { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+  .tile .v { font-size:24px; font-weight:700; } .tile .s { font-size:13px; color:var(--muted); }
+  .feed { list-style:none; padding:0; margin:0; max-height:260px; overflow:auto; font-size:13px; } .feed li { padding:5px 0; border-bottom:1px dashed #e6e1d6; }
+  .feed .t { color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px; }
+  .ok { color:var(--good); font-weight:600; } .bad { color:var(--bad); font-weight:600; } .scroll { overflow-x:auto; }
+  .rule { display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:8px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; background:#fffdf8; }
+  .rule .w { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; }
+  input.n { width:70px; } input.k { width:150px; } input.v { width:120px; }
+  dialog { border:1px solid var(--line); border-radius:14px; padding:18px; max-width:560px; width:calc(100% - 32px); color:var(--ink); background:var(--card); }
+  dialog pre { white-space:pre-wrap; word-break:break-word; font-size:13px; background:#f1eee6; padding:10px; border-radius:8px; max-height:300px; overflow:auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lumen Referrals</h1><span class="sub">Invite a friend · rewards and targeting on Adapty</span>
+  <span id="mode" class="badge mock">…</span><span class="sp"></span>
+  <span class="sub" id="placement"></span>
+  <button id="reset" title="Clears this demo's local data. Profiles already in Adapty stay.">Reset demo</button>
+</header>
+<nav class="tabs">
+  <button data-tab="users" class="on">End users (phones)</button>
+  <button data-tab="owner">App owner: program settings</button>
+  <button data-tab="dash">Growth dashboard</button>
+</nav>
+
+<div class="page" id="tab-users"><div class="wrap">
+  <div class="grid3">
+    <div>
+      <div class="phone" id="phoneA">
+        <div class="bar"><span>Inviter’s phone</span><span>9:41</span></div>
+        <div id="phoneA-body"></div>
+      </div>
+    </div>
+    <div>
+      <div class="phone" id="phoneB">
+        <div class="bar"><span>Friend’s phone</span><span>9:41</span></div>
+        <div id="phoneB-body"></div>
+      </div>
+    </div>
+    <div class="dash">
+      <div class="card">
+        <h2>What just happened</h2>
+        <p class="hint">Live feed of the referral system and its Adapty calls.</p>
+        <ul class="feed" id="events-a"></ul>
+      </div>
+      <div class="card">
+        <h2>Adapty API calls</h2>
+        <ul class="feed" id="calls-a"></ul>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div class="page" id="tab-owner" hidden><div class="wrap">
+  <div class="grid2">
+    <div>
+      <h2>Rules: what happens when someone refers</h2>
+      <p class="hint">The app owner decides. Rules run in order for each event; changes apply immediately.</p>
+      <div id="rules"></div>
+      <div class="row"><button id="add-rule">+ Add rule</button></div>
+      <h3>Tiers (by paid referrals, sent to Adapty as <code>referral_tier</code>)</h3>
+      <div id="tiers"></div>
+      <div class="row"><button id="add-tier">+ Add tier</button></div>
+      <h3>Abuse limits</h3>
+      <div class="row"><label style="margin:0">Max premium rewards per inviter</label><input id="cap" type="number" min="1" class="n"></div>
+      <p class="hint" style="margin-top:6px">Always on: no self-referral, one account per email (case, +tags and Gmail dots count as the same).</p>
+      <div class="row" style="margin-top:12px"><button class="primary" id="save-program">Save program</button><button id="default-program">Restore defaults</button></div>
+      <div id="program-msg"></div>
+    </div>
+    <div>
+      <h2>Use the data in Adapty</h2>
+      <p class="hint">Every referral writes these profile attributes. Build segments on them in Adapty and give each segment its own paywall on a placement.</p>
+      <table>
+        <thead><tr><th>Attribute</th><th>On</th><th>Segment filter</th></tr></thead>
+        <tbody id="attrs"></tbody>
+      </table>
+      <h3>Already set up in the sandbox app</h3>
+      <p class="hint" style="margin:0">Placement <code id="pl"></code>: <b>Referred users</b> → “Referral welcome” paywall, above All users → “Paywall A”.</p>
+      <h3>In production</h3>
+      <p class="hint" style="margin:0">The share link is an Adapty Attribution link with the code in <code>deferred_data_sub1</code>. On first launch the Adapty SDK hands the app that payload (<code>onInstallationDetailsSuccess</code>), and the app sends the code to this service. Adapty attributes hold up to 50 characters each, 30 per user, so the full invite list stays here and Adapty gets counts and tiers.</p>
+    </div>
+  </div>
+</div></div>
+
+<div class="page" id="tab-dash" hidden><div class="wrap">
+  <div class="tiles">
+    <div class="tile"><div class="k">Links shared</div><div class="v" id="t-shares">0</div><div class="s">from the Refer button</div></div>
+    <div class="tile"><div class="k">Referred installs</div><div class="v" id="t-ref">0</div><div class="s" id="t-ref-s"></div></div>
+    <div class="tile"><div class="k">Revenue / referred user</div><div class="v" id="t-rpu">$0</div><div class="s" id="t-rpu-s"></div></div>
+    <div class="tile"><div class="k">Premium days granted</div><div class="v" id="t-days">0</div><div class="s">through Adapty access levels</div></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h2>Who referred whom</h2>
+    <p class="hint">Purchases and revenue are simulated. <b>In Adapty</b> shows the real profile.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>User</th><th>Code</th><th>Came from</th><th>Invited</th><th>Tier</th><th>Premium earned</th><th></th></tr></thead>
+      <tbody id="people"></tbody>
+    </table></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h2>Rewards and attributes applied</h2><ul class="feed" id="rewards"></ul></div>
+    <div class="card"><h2>Activity</h2><ul class="feed" id="events-d"></ul></div>
+  </div>
+</div></div>
+
+<dialog id="dlg">
+  <h2 id="dlg-title">In Adapty</h2><div id="dlg-body"></div>
+  <div class="row" style="margin-top:12px;justify-content:flex-end"><button id="dlg-close">Close</button></div>
+</dialog>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const money = (n) => "$" + Number(n || 0).toFixed(2);
+let S = null;                 // last server state
+let phoneA = { userId: null, sheet: false, msg: null, signup: false };
+let phoneB = { step: "idle", message: null, result: null };
+let program = null, programDirty = false;
+
+async function api(path, body) {
+  const res = await fetch(location.origin + path, body === undefined ? {} : { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) });
+  const data = await res.json().catch(() => ({ error:"Bad response" }));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+const link = (code) => `${location.origin}/r/${code}`;
+const userById = (id) => (S?.users || []).find((u) => u.id === id);
+
+/* ---------- tabs ---------- */
+document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("nav.tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  ["users", "owner", "dash"].forEach((t) => $("tab-" + t).hidden = t !== b.dataset.tab);
+}));
+
+function paywallCard(pw) {
+  if (!pw) return "";
+  if (pw.error) return `<div class="msg err">Adapty paywall request failed: ${esc(JSON.stringify(pw.error).slice(0, 160))}</div>`;
+  const ref = /referral/i.test(pw.paywall_name || "");
+  const prods = (pw.products || []).length ? `<div class="hint" style="margin:4px 0 0">${pw.products.map(esc).join(" · ")}</div>` : "";
+  return `<div class="paywall ${ref ? "ref" : ""}"><div class="hint" style="margin:0">Adapty served this paywall</div><div class="name">${esc(pw.paywall_name || "(none)")}</div>${prods}</div>`;
+}
+function actionsList(actions) {
+  if (!actions || !actions.length) return "";
+  return `<ul style="margin:6px 0 0;padding-left:18px;font-size:13px">${actions.map((a) => `<li class="${a.ok ? "" : "bad"}">${esc(a.to)}: ${esc(a.detail)}${a.ok ? "" : " (failed)"}</li>`).join("")}</ul>`;
+}
+
+/* ---------- inviter phone ---------- */
+function renderPhoneA() {
+  const users = S?.users || [];
+  if (phoneA.userId && !userById(phoneA.userId)) phoneA.userId = null;
+  if (!phoneA.userId && users.length && !phoneA.signup) phoneA.userId = users[0].id;
+  let html = "";
+  if (!phoneA.userId) {
+    html = `<div class="title">Lumen</div>
+      <p class="hint">Create the first account (an organic user).</p>
+      <form id="a-signup"><label>Name</label><input class="full" id="a-name" required placeholder="Ana">
+      <label>Email</label><input class="full" id="a-email" type="email" required placeholder="ana@example.com">
+      <div class="row" style="margin-top:10px"><button class="primary">Create account</button>
+      ${users.length ? '<button type="button" class="link" id="a-cancel">cancel</button>' : ""}</div></form>`;
+  } else {
+    const u = userById(phoneA.userId);
+    const opts = users.map((x) => `<option value="${x.id}" ${x.id === u.id ? "selected" : ""}>${esc(x.name)}</option>`).join("");
+    html = `<div class="row" style="justify-content:space-between"><span class="hint" style="margin:0">Signed in as</span>
+        <select id="a-who">${opts}</select></div>
+      <div class="title" style="margin-top:8px">Invite friends, get premium</div>
+      <div class="stat"><div><b>${u.invited}</b><span>invited</span></div><div><b>${u.invited_paid}</b><span>paid</span></div><div><b>${u.reward_days}</b><span>days earned</span></div></div>
+      <div class="row"><span class="tag tier">tier: ${esc(u.tier)}</span>${u.referred_by_name ? `<span class="tag ref">invited by ${esc(u.referred_by_name)}</span>` : ""}</div>
+      ${u.invited_names ? `<p class="hint" style="margin:8px 0 0">You invited: ${esc(u.invited_names)}</p>` : ""}
+      <div class="row" style="margin-top:12px"><button class="primary" id="a-refer" style="width:100%">Refer a friend</button></div>
+      <p class="hint" style="margin:8px 0 0">Your link: <code>${esc(link(u.code))}</code></p>
+      <div class="row" style="margin-top:10px"><button class="link" id="a-new">+ another organic user</button></div>`;
+    if (phoneA.sheet) {
+      const apps = [["WhatsApp", "#25d366", "✆"], ["Messages", "#34c759", "✉"], ["Instagram", "#c13584", "◎"], ["Copy link", "#8e8e93", "⧉"]];
+      html += `<div class="sheet"><div class="row" style="justify-content:space-between;margin-bottom:10px"><b style="font-size:14px">Share invite</b><button class="link" id="a-close">Cancel</button></div>
+        <div class="bubble" style="background:#fff;margin-bottom:10px;font-size:13px">Join me on Lumen. We both get premium! ${esc(link(u.code))}</div>
+        <div class="apps">${apps.map(([n, c, i]) => `<button data-share="${n}"><span class="ic" style="background:${c}">${i}</span>${n}</button>`).join("")}</div></div>`;
+    }
+  }
+  $("phoneA-body").innerHTML = html + (phoneA.msg ? `<div class="msg ${phoneA.msg.err ? "err" : "ok"}">${esc(phoneA.msg.text)}</div>` : "");
+}
+
+document.addEventListener("submit", async (e) => {
+  if (e.target.id === "a-signup") {
+    e.preventDefault();
+    try { const r = await api("/api/users", { name:$("a-name").value, email:$("a-email").value });
+      phoneA = { userId:r.user_id, sheet:false, msg:{ text:"Account created (organic). Adapty profile synced." }, signup:false }; await refresh();
+    } catch (err) { phoneA.msg = { text:err.message, err:true }; renderPhoneA(); }
+  }
+  if (e.target.id === "b-signup") {
+    e.preventDefault();
+    const m = phoneB.message;
+    try { phoneB.result = await api("/api/users", { name:$("b-name").value, email:$("b-email").value, code:m.code, via:m.channel });
+      phoneB.step = "home"; phoneB.name = $("b-name").value; await refresh();
+    } catch (err) { phoneB.error = err.message; renderPhoneB(); }
+  }
+});
+
+/* ---------- friend phone ---------- */
+function renderPhoneB() {
+  const m = phoneB.message; let html = "";
+  if (phoneB.step === "idle") {
+    html = `<div class="title">Messages</div><p class="hint" style="text-align:center;margin-top:60px">No messages yet.<br>Tap <b>Refer a friend</b> on the inviter’s phone.</p>`;
+  } else if (phoneB.step === "message") {
+    html = `<div class="title">${esc(m.channel)}</div><p class="hint">${esc(m.from)}</p>
+      <div class="bubble">Join me on Lumen. We both get premium!<br><button class="link" id="b-open">${esc(link(m.code))}</button></div>
+      <p class="hint" style="margin-top:10px">Tap the link. In production it is an Adapty Attribution link carrying the code.</p>`;
+  } else if (phoneB.step === "store") {
+    html = `<div class="title">App Store</div><div class="store"><div class="logo">L</div><b>Lumen: AI Photo Editor</b>
+      <p class="hint">Invited by ${esc(m.from)}</p><button class="primary" id="b-get">${phoneB.installed ? "Open" : "Get"}</button></div>
+      <p class="hint" style="margin-top:10px">The install is simulated. Adapty keeps the click, so the app learns the code on first launch.</p>`;
+  } else if (phoneB.step === "onboard") {
+    html = `<div class="title">Lumen</div><div class="msg ok" style="margin-top:0">🎉 ${esc(m.from)} invited you. Code <code>${esc(m.code)}</code> applied automatically.</div>
+      <form id="b-signup"><label>Your name</label><input class="full" id="b-name" required placeholder="Mila">
+      <label>Email</label><input class="full" id="b-email" type="email" required placeholder="mila@example.com">
+      <div class="row" style="margin-top:10px"><button class="primary">Continue</button></div></form>
+      ${phoneB.error ? `<div class="msg err">${esc(phoneB.error)}</div>` : ""}`;
+  } else if (phoneB.step === "home") {
+    const r = phoneB.result;
+    html = `<div class="title">Lumen</div><div class="msg ok" style="margin-top:0">Welcome, ${esc(phoneB.name)}! Invited by ${esc(r.referred_by)}.${actionsList(r.actions)}</div>
+      ${paywallCard(r.paywall)}
+      <div class="row" style="margin-top:10px"><button class="small" data-buy="${r.user_id}" data-product="monthly">Buy monthly ${money(9.99)}</button>
+      <button class="small" data-buy="${r.user_id}" data-product="annual">Buy annual ${money(59.99)}</button></div>
+      ${phoneB.buyMsg ? `<div class="msg ok">${phoneB.buyMsg}</div>` : ""}
+      <div class="row" style="margin-top:12px"><button class="link" id="b-reset">Next friend (clear this phone)</button></div>`;
+  }
+  $("phoneB-body").innerHTML = html;
+}
+
+/* ---------- clicks ---------- */
+document.addEventListener("change", (e) => {
+  if (e.target.id === "a-who") { phoneA.userId = Number(e.target.value); phoneA.msg = null; renderPhoneA(); }
+  if (e.target.closest("#rules, #tiers") || e.target.id === "cap") { programDirty = true; readProgram(); renderRules(); }
+});
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  const id = t.id;
+  if (id === "a-refer") { phoneA.sheet = true; phoneA.msg = null; return renderPhoneA(); }
+  if (id === "a-close") { phoneA.sheet = false; return renderPhoneA(); }
+  if (id === "a-new") { phoneA = { userId:null, sheet:false, msg:null, signup:true }; return renderPhoneA(); }
+  if (id === "a-cancel") { phoneA.signup = false; return renderPhoneA(); }
+  if (t.dataset.share) {
+    const u = userById(phoneA.userId);
+    try { await api("/api/share", { code:u.code, channel:t.dataset.share }); } catch {}
+    phoneA.sheet = false;
+    if (t.dataset.share === "Copy link") { try { await navigator.clipboard.writeText(link(u.code)); } catch {} phoneA.msg = { text:"Link copied. Open it on any device to try the real invite page." }; }
+    else { phoneB = { step:"message", message:{ from:u.name, code:u.code, channel:t.dataset.share } }; phoneA.msg = { text:`Sent via ${t.dataset.share}.` }; }
+    await refresh(); return;
+  }
+  if (id === "b-open") { phoneB.step = "store"; return renderPhoneB(); }
+  if (id === "b-get") { if (!phoneB.installed) { phoneB.installed = true; return renderPhoneB(); } phoneB.step = "onboard"; return renderPhoneB(); }
+  if (id === "b-reset") { phoneB = { step:"idle" }; return renderPhoneB(); }
+  if (t.dataset.buy) {
+    t.disabled = true;
+    try { const r = await api(`/api/users/${t.dataset.buy}/purchase`, { product:t.dataset.product });
+      const txt = r.actions.length ? `Purchase done. ${r.actions.map((a) => `${a.to}: ${a.detail}`).join("; ")}` : (r.first_payment ? "Purchase done." : "Purchase done (not the first, so no referral rules ran).");
+      if (phoneB.result && String(phoneB.result.user_id) === t.dataset.buy) phoneB.buyMsg = esc(txt);
+      await refresh();
+    } catch (err) { alert(err.message); } finally { t.disabled = false; }
+    return;
+  }
+  if (t.dataset.inspect) return inspect(t.dataset.inspect, t.dataset.name);
+  if (id === "add-rule") { readProgram(); program.rules.push({ trigger:"install", recipient:"friend", action:"grant", days:7 }); programDirty = true; return renderRules(); }
+  if (t.dataset.delrule !== undefined) { readProgram(); program.rules.splice(Number(t.dataset.delrule), 1); programDirty = true; return renderRules(); }
+  if (id === "add-tier") { readProgram(); program.tiers.push({ name:"platinum", min_paid:10 }); programDirty = true; return renderRules(); }
+  if (t.dataset.deltier !== undefined) { readProgram(); program.tiers.splice(Number(t.dataset.deltier), 1); programDirty = true; return renderRules(); }
+  if (id === "save-program") { readProgram(); try { program = await api("/api/program", program); programDirty = false; $("program-msg").innerHTML = '<div class="msg ok">Saved. New referrals use these rules.</div>'; await refresh(); } catch (err) { $("program-msg").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; } return; }
+  if (id === "default-program") { program = await api("/api/program/default", {}); programDirty = false; $("program-msg").innerHTML = '<div class="msg ok">Defaults restored.</div>'; return refresh(); }
+  if (id === "dlg-close") return $("dlg").close();
+  if (id === "reset") { if (!confirm("Clear this demo's local data? Profiles already created in Adapty stay there.")) return;
+    await api("/api/reset", {}); phoneA = { userId:null, sheet:false, msg:null, signup:false }; phoneB = { step:"idle" }; return refresh(); }
+});
+
+async function inspect(uid, name) {
+  $("dlg-title").textContent = "Checking in Adapty…"; $("dlg-body").innerHTML = ""; $("dlg").showModal();
+  try {
+    const r = await api(`/api/users/${uid}/adapty`); const p = r.profile || {};
+    const attrs = p.custom_attributes ? Object.entries(p.custom_attributes).map(([k, v]) => `<li><code>${esc(k)}</code> = ${esc(v)}</li>`).join("") : "";
+    const access = (p.access_levels || []).map((a) => `<li><code>${esc(a.access_level_id)}</code> until ${esc(a.expires_at || "—")}</li>`).join("") || "<li>none</li>";
+    $("dlg-title").textContent = `${name} in Adapty`;
+    $("dlg-body").innerHTML = p.error ? `<pre>${esc(JSON.stringify(p.error, null, 2))}</pre>` :
+      `<h3>Custom attributes</h3><ul>${attrs || "<li>none</li>"}</ul><h3>Access levels</h3><ul>${access}</ul>${paywallCard(r.paywall)}`;
+  } catch (err) { $("dlg-body").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+}
+
+/* ---------- program settings ---------- */
+function opt(map, sel) { return Object.entries(map).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${esc(v)}</option>`).join(""); }
+function renderRules() {
+  const c = S.catalog;
+  $("rules").innerHTML = program.rules.map((r, i) => `<div class="rule" data-i="${i}">
+      <span class="w">When</span><select data-f="trigger">${opt(c.triggers, r.trigger)}</select>
+      ${r.trigger === "paid_referrals_reached" ? `<span>N =</span><input class="n" data-f="n" type="number" min="1" value="${r.n ?? 3}">` : ""}
+      <span class="w">give</span><select data-f="recipient">${opt(c.recipients, r.recipient)}</select>
+      <select data-f="action">${opt(c.actions, r.action)}</select>
+      ${r.action === "grant" ? `<input class="n" data-f="days" type="number" min="1" value="${r.days ?? 7}"><span>days</span>`
+        : `<input class="k" data-f="key" placeholder="key" maxlength="30" value="${esc(r.key ?? "")}"><span>=</span><input class="v" data-f="value" placeholder="value" maxlength="50" value="${esc(r.value ?? "")}">`}
+      <button class="small" data-delrule="${i}" title="Remove rule">✕</button></div>`).join("") || '<p class="hint">No rules: referrals are tracked but nobody is rewarded.</p>';
+  $("tiers").innerHTML = program.tiers.map((t, i) => `<div class="rule" data-t="${i}"><span class="w">Tier</span><input class="v" data-f="name" value="${esc(t.name)}" maxlength="20">
+      <span>from</span><input class="n" data-f="min_paid" type="number" min="1" value="${t.min_paid}"><span>paid referrals</span>
+      <button class="small" data-deltier="${i}">✕</button></div>`).join("");
+  $("cap").value = program.max_rewarded_referrals;
+  const custom = [...new Set(program.rules.filter((r) => r.action === "set_attribute" && r.key).map((r) => r.key))];
+  const rows = [
+    ["referral_status", "everyone", "attributes__referral_status@string IN referred"],
+    ["referred_by", "friend", "attributes__referred_by@string IS NOT NULL"],
+    ["referrals_made", "inviter", "attributes__referrals_made@float >= 1"],
+    ["referrals_paid", "inviter", "attributes__referrals_paid@float >= 3"],
+    ["referral_tier", "inviter", `attributes__referral_tier@string IN ${program.tiers.map((t) => t.name).join(",") || "…"}`],
+    ...custom.map((k) => [k, "set by your rules", `attributes__${k}@string IN …`]),
+  ];
+  $("attrs").innerHTML = rows.map(([k, on, f]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(on)}</td><td><code style="font-size:12px">${esc(f)}</code></td></tr>`).join("");
+}
+function readProgram() {
+  document.querySelectorAll("#rules .rule").forEach((el) => {
+    const r = program.rules[Number(el.dataset.i)];
+    el.querySelectorAll("[data-f]").forEach((f) => { r[f.dataset.f] = f.type === "number" ? Number(f.value) : f.value; });
+    if (r.action === "grant") { r.days = r.days || 7; delete r.key; delete r.value; } else { delete r.days; }
+    if (r.trigger === "paid_referrals_reached") { r.recipient = "inviter"; r.n = r.n || 3; } else delete r.n;
+  });
+  document.querySelectorAll("#tiers .rule").forEach((el) => {
+    const t = program.tiers[Number(el.dataset.t)];
+    el.querySelectorAll("[data-f]").forEach((f) => { t[f.dataset.f] = f.type === "number" ? Number(f.value) : f.value; });
+  });
+  program.max_rewarded_referrals = Number($("cap").value) || 5;
+}
+
+/* ---------- refresh ---------- */
+function feed(el, items) { $(el).innerHTML = items || '<li class="hint">Nothing yet.</li>'; }
+async function refresh() {
+  try { S = await api("/api/state"); } catch { return; }
+  $("mode").textContent = S.mode === "live" ? "LIVE · Adapty" : "MOCK · offline"; $("mode").className = "badge " + S.mode;
+  $("placement").textContent = `placement: ${S.placement}`; $("pl").textContent = S.placement;
+  if (!programDirty) { program = JSON.parse(JSON.stringify(S.program)); if (!document.activeElement?.closest?.("#tab-owner")) renderRules(); }
+  if (!document.activeElement?.closest?.("#phoneA form, #phoneB form")) { renderPhoneA(); renderPhoneB(); }
+  const ev = S.events.map((e) => `<li><span class="t">${esc(e.at.slice(11))}</span>${esc(e.text)}</li>`).join("");
+  feed("events-a", ev); feed("events-d", ev);
+  feed("calls-a", S.calls.map((c) => `<li><span class="t">${esc(c.at)}</span><span class="${c.status >= 200 && c.status < 300 ? "ok" : "bad"}">${c.status || "ERR"}</span>
+     <code>${esc(c.method)} ${esc(c.path)}</code> <span class="hint">${esc(c.note)}</span></li>`).join(""));
+  feed("rewards", S.rewards.map((w) => `<li><span class="t">${esc(w.granted_at.slice(11))}</span><b>${esc(w.name)}</b>: ${esc(w.detail)} <span class="hint">${esc(w.reason)}</span>${w.ok ? "" : ' <span class="bad">failed</span>'}</li>`).join(""));
+  const r = S.stats.referred, o = S.stats.organic;
+  $("t-shares").textContent = S.stats.shares;
+  $("t-ref").textContent = r.users; $("t-ref-s").textContent = `${r.conversion}% paid · organic ${o.conversion}% (${o.users} users)`;
+  $("t-rpu").textContent = money(r.revenue_per_user); $("t-rpu-s").textContent = `organic: ${money(o.revenue_per_user)}`;
+  $("t-days").textContent = S.stats.reward_days;
+  $("people").innerHTML = S.users.length ? S.users.map((u) => `<tr>
+      <td><b>${esc(u.name)}</b><br><span class="hint" style="margin:0">${esc(u.email)}</span>${u.first_paid_at ? '<br><span class="tag paid">paying</span>' : ""}${u.adapty_synced ? "" : ' <span class="tag">not synced</span>'}</td>
+      <td><code>${esc(u.code)}</code><br><span class="hint">${u.shares} shares</span></td>
+      <td>${u.referred_by_name ? `<span class="tag ref">${esc(u.referred_by_name)}</span>${u.via ? `<br><span class="hint">via ${esc(u.via)}</span>` : ""}` : '<span class="tag">organic</span>'}</td>
+      <td>${u.invited ? `${u.invited} <span class="hint">(${u.invited_paid} paid)</span><br><span class="hint">${esc(u.invited_names)}</span>` : "—"}</td>
+      <td><span class="tag tier">${esc(u.tier)}</span></td>
+      <td>${u.reward_days ? u.reward_days + " days" : "—"}</td>
+      <td class="row"><button class="small" data-buy="${u.id}" data-product="monthly">Buy</button><button class="small" data-inspect="${u.id}" data-name="${esc(u.name)}">In Adapty</button></td></tr>`).join("")
+    : '<tr><td colspan="7" class="hint">No users yet.</td></tr>';
+}
+refresh(); setInterval(refresh, 3000);
+</script>
+</body>
+</html>

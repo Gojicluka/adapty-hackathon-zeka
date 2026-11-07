@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referrals | Adapty (prototype)</title>
+<link rel="icon" href="/static/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#111111; --nav:#313131; --muted:#6b6b76; --line:#e7e7e7; --hover:#f3f3f3; --th:#faf9fc; --purple:#6720ff; --purple-soft:#f5f5ff; --purple-ink:#6f54c0;
+          --blue-soft:#f2f7ff; --blue:#2b57d4; --blue-line:#d6e9ff; --good:#15803d; --good-soft:#ecfdf3; --bad:#b42318; --warn-soft:#fff6e5; --warn:#8a4b00; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font:14px/1.45 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .proto { background:#1d1640; color:#e6e0ff; font-size:12px; padding:6px 16px; text-align:center; }
+  .proto b { color:#fff; }
+  .shell { display:flex; min-height:calc(100vh - 29px); }
+  aside { width:240px; flex:none; border-right:1px solid var(--line); padding:14px 13px; display:flex; flex-direction:column; gap:2px; }
+  .brand { display:flex; align-items:center; gap:8px; padding:4px 8px 16px; font-weight:700; font-size:19px; letter-spacing:-.3px; }
+  .brand .dot { width:22px; height:22px; border-radius:7px; background:var(--purple); }
+  .brand small { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:0; margin-left:auto; }
+  .nav { display:flex; align-items:center; gap:10px; height:36px; padding:0 10px; border-radius:6px; color:var(--nav); font-weight:500; cursor:pointer; text-decoration:none; }
+  .nav:hover { background:var(--hover); } .nav.on { background:var(--hover); }
+  .nav svg { width:18px; height:18px; flex:none; stroke:#6b6b76; fill:none; stroke-width:1.7; }
+  .badge-new { margin-left:auto; font-size:12px; font-weight:500; color:var(--blue); background:var(--blue-soft); border:1px solid var(--blue-line); border-radius:4px; padding:1px 7px; }
+  .content { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .topbar { height:49px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; padding:0 24px; }
+  .app { display:flex; align-items:center; gap:8px; font-weight:500; border:1px solid var(--line); border-radius:8px; padding:5px 10px; }
+  .app .l { width:22px; height:22px; border-radius:6px; background:linear-gradient(135deg,#6720ff,#c2410c); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .topbar .sp { flex:1; } .topbar a { color:var(--nav); text-decoration:none; font-weight:500; }
+  .mode { font-size:12px; font-weight:600; border-radius:99px; padding:3px 10px; } .mode.live { background:var(--good-soft); color:var(--good); } .mode.mock { background:var(--warn-soft); color:var(--warn); }
+  main { padding:24px; max-width:1400px; }
+  .h { display:flex; align-items:center; gap:14px; margin-bottom:6px; } h2 { font-size:24px; font-weight:600; margin:0; }
+  .h a { color:var(--purple); font-weight:500; text-decoration:none; font-size:14px; }
+  .lead { color:var(--muted); margin:0 0 18px; max-width:820px; }
+  .tabs { display:inline-flex; background:var(--hover); border-radius:8px; padding:3px; gap:2px; margin-bottom:20px; flex-wrap:wrap; }
+  .tabs button { border:1px solid transparent; background:transparent; border-radius:6px; padding:6px 12px; font:inherit; font-weight:500; color:var(--nav); cursor:pointer; }
+  .tabs button.on { background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .btn { font:inherit; font-weight:500; height:40px; padding:0 16px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; }
+  .btn.primary { background:var(--purple); border-color:var(--purple); color:#fff; } .btn.sm { height:32px; padding:0 10px; font-size:13px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(165px,1fr)); gap:12px; margin-bottom:18px; }
+  .card { border:1px solid var(--line); border-radius:12px; padding:16px; background:#fff; }
+  .metric .k { color:var(--muted); font-weight:500; } .metric .v { font-size:26px; font-weight:600; margin:4px 0 2px; } .metric .s { color:var(--muted); font-size:13px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:1100px) { .grid2 { grid-template-columns:1fr; } }
+  h3 { font-size:16px; font-weight:600; margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 12px; font-size:13px; }
+  .funnel .row { display:grid; grid-template-columns:150px 1fr 60px; align-items:center; gap:10px; margin:8px 0; }
+  .funnel .bar { height:26px; border-radius:6px; background:var(--purple-soft); position:relative; overflow:hidden; }
+  .funnel .bar i { position:absolute; inset:0 auto 0 0; background:var(--purple); border-radius:6px; }
+  .funnel .n { text-align:right; font-weight:600; }
+  table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  th { background:var(--th); text-align:left; font-weight:700; padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; } tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; border-radius:99px; padding:2px 8px; background:var(--purple-soft); color:var(--purple-ink); }
+  .pill.gray { background:var(--hover); color:var(--muted); } .pill.good { background:var(--good-soft); color:var(--good); } .pill.warn { background:var(--warn-soft); color:var(--warn); }
+  .muted { color:var(--muted); } code { font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12.5px; background:var(--hover); padding:1px 6px; border-radius:5px; }
+  .feed { list-style:none; margin:0; padding:0; max-height:300px; overflow:auto; } .feed li { padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; } .feed li:last-child { border:none; }
+  .feed .t { color:var(--muted); font-variant-numeric:tabular-nums; margin-right:8px; } .ok { color:var(--good); font-weight:600; } .bad { color:var(--bad); font-weight:600; }
+  .rule { display:flex; align-items:center; gap:8px; flex-wrap:wrap; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .rule .w { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.3px; }
+  select, input { font:inherit; height:36px; border:1px solid var(--line); border-radius:8px; padding:0 10px; background:#fff; color:var(--ink); }
+  input.n { width:76px; } input.k { width:150px; } input.v { width:130px; }
+  .x { border:none; background:none; color:var(--muted); font-size:18px; cursor:pointer; margin-left:auto; }
+  .note { border:1px solid var(--blue-line); background:var(--blue-soft); color:#1e3a8a; border-radius:12px; padding:12px 14px; font-size:13px; }
+  .msg { margin-top:10px; padding:10px 12px; border-radius:8px; } .msg.ok { background:var(--good-soft); color:var(--good); } .msg.err { background:#fef3f2; color:var(--bad); }
+  .qr { display:flex; gap:24px; align-items:center; flex-wrap:wrap; } #qr { padding:12px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+  dialog { border:1px solid var(--line); border-radius:12px; padding:20px; width:min(560px, calc(100% - 32px)); }
+  dialog::backdrop { background:rgba(17,17,17,.35); }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 16px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; }
+  .toast.on { opacity:1; }
+  @media (max-width:860px) { aside { display:none; } main { padding:16px; } .topbar { padding:0 16px; } }
+</style>
+</head>
+<body>
+<div class="proto"><b>Prototype</b> built at the Adapty Hackathon Belgrade · Referrals is a proposed feature, not part of Adapty · other menu items are placeholders</div>
+<div class="shell">
+  <aside>
+    <div class="brand"><span class="dot"></span>adapty<small>prototype</small></div>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Overview</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5"/></svg>Profiles &amp; Segments</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg>Products</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 18h6"/></svg>Flows &amp; Paywalls</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>Placements</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>Retention Messaging</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M6 3v18M18 3v18M6 8h12M6 16h12"/></svg>A/B tests</a>
+    <a class="nav on"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4"/></svg>Referrals<span class="badge-new">New</span></a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>AI Growth Advisor</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/></svg>Integrations</a>
+    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Event feed</a>
+  </aside>
+  <div class="content">
+    <div class="topbar">
+      <div class="app"><span class="l">L</span>Lumen - AI Photo Editor (Hackathon)</div>
+      <span id="mode" class="mode mock">…</span>
+      <span class="sp"></span>
+      <a data-ph>Help</a><a data-ph>App settings</a><a data-ph>Account</a>
+    </div>
+    <main>
+      <div class="h"><h2>Referrals</h2><a data-ph>Read the docs</a></div>
+      <p class="lead">Let users invite friends from your app. Rewards are granted as Adapty access levels, and every referral writes profile attributes you can segment on, so referred users and top referrers can see their own paywalls.</p>
+      <div class="tabs" id="tabs">
+        <button data-tab="overview" class="on">Overview</button><button data-tab="program">Program</button>
+        <button data-tab="referrers">Referrers</button><button data-tab="segments">Segments &amp; paywalls</button><button data-tab="install">Test on a phone</button>
+      </div>
+
+      <section id="t-overview">
+        <div class="cards" id="metrics"></div>
+        <div class="grid2">
+          <div class="card funnel"><h3>Referral funnel</h3><p class="sub">From the Refer button to a paying friend.</p><div id="funnel"></div></div>
+          <div class="card"><h3>Referred vs organic</h3><p class="sub">Purchases are simulated in this demo.</p>
+            <table><thead><tr><th>Cohort</th><th>Users</th><th>Paid</th><th>Conversion</th><th>Revenue / user</th></tr></thead><tbody id="cohorts"></tbody></table></div>
+        </div>
+        <div class="grid2" style="margin-top:16px">
+          <div class="card"><h3>Activity</h3><ul class="feed" id="events"></ul></div>
+          <div class="card"><h3>Adapty API calls</h3><p class="sub">Server-side and web API calls made by the referral service.</p><ul class="feed" id="calls"></ul></div>
+        </div>
+      </section>
+
+      <section id="t-program" hidden>
+        <div class="grid2">
+          <div>
+            <h3>Rules</h3><p class="sub">What happens when someone refers. Rules run in order; changes apply to new events immediately.</p>
+            <div id="rules"></div><button class="btn sm" id="add-rule">+ Add rule</button>
+            <h3 style="margin-top:22px">Tiers</h3><p class="sub">By paid referrals. Written to the inviter’s profile as <code>referral_tier</code>.</p>
+            <div id="tiers"></div><button class="btn sm" id="add-tier">+ Add tier</button>
+            <h3 style="margin-top:22px">Limits</h3>
+            <div class="rule"><span>Max premium rewards per inviter</span><input id="cap" type="number" min="1" class="n"></div>
+            <p class="sub">Always on: no self-referral, one account per email (case, +tags and Gmail dots count as the same).</p>
+            <div style="display:flex;gap:8px;margin-top:6px"><button class="btn primary" id="save">Save program</button><button class="btn" id="defaults">Restore defaults</button></div>
+            <div id="pmsg"></div>
+          </div>
+          <div>
+            <div class="card"><h3>How a referral works</h3>
+              <ol class="muted" style="padding-left:18px;margin:8px 0 0">
+                <li>The user taps <b>Refer a friend</b>; the phone’s share sheet sends their link.</li>
+                <li>The link is an Adapty Attribution link carrying the code in <code>deferred_data_sub1</code>.</li>
+                <li>The friend installs; on first launch the Adapty SDK returns the payload (<code>onInstallationDetailsSuccess</code>) and the app claims the code.</li>
+                <li>Your rules run: access levels are granted and attributes are written to both profiles.</li>
+                <li>Segments on those attributes route each user to the right paywall.</li>
+              </ol></div>
+            <div class="note" style="margin-top:12px">Adapty custom attributes hold up to 50 characters each, 30 per profile. The full invite graph stays in the referral service; profiles get counts, tiers and flags.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="t-referrers" hidden>
+        <table><thead><tr><th>User</th><th>Code</th><th>Came from</th><th>Invited</th><th>Tier</th><th>Premium earned</th><th>Status</th><th></th></tr></thead><tbody id="people"></tbody></table>
+      </section>
+
+      <section id="t-segments" hidden>
+        <div class="grid2">
+          <div><h3>Attributes written by Referrals</h3><p class="sub">Use them in <b>Profiles &amp; Segments</b>, then give each segment its own paywall in <b>Placements</b>.</p>
+            <table><thead><tr><th>Attribute</th><th>Profile</th><th>Example segment filter</th></tr></thead><tbody id="attrs"></tbody></table></div>
+          <div><h3>Live in this app</h3><p class="sub">Placement <code id="pl"></code></p>
+            <table><thead><tr><th>Priority</th><th>Audience</th><th>Shows</th></tr></thead><tbody>
+              <tr><td>#1</td><td>Serbia users</td><td>A/B test: monthly-first vs annual-first</td></tr>
+              <tr><td>#2</td><td><b>Referred users</b> <span class="pill">referrals</span></td><td>Referral welcome</td></tr>
+              <tr><td>#3</td><td>All users</td><td>Paywall A - monthly first</td></tr>
+            </tbody></table>
+            <div class="note" style="margin-top:12px">Ideas: give the <code>gold</code> tier an exclusive annual offer, or show a “thanks for sharing” paywall to inviters with <code>referrals_paid ≥ 3</code>.</div></div>
+        </div>
+      </section>
+
+      <section id="t-install" hidden>
+        <div class="card qr"><div id="qr"></div>
+          <div><h3>Install the demo app</h3><p class="sub" style="max-width:520px">Scan with a phone camera. iPhone: open in Safari, then Share → Add to Home Screen. Android: tap Install, or use the APK below.</p>
+            <p><a id="applink" class="muted"></a></p><p id="apk"></p></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+<dialog id="dlg"><h3 id="dlg-t">Profile</h3><div id="dlg-b"></div><div style="text-align:right;margin-top:12px"><button class="btn" onclick="this.closest('dialog').close()">Close</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const money = (n) => "$" + Number(n || 0).toFixed(2);
+let S = null, program = null, dirty = false;
+
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 1800); }
+document.querySelectorAll("[data-ph]").forEach((a) => a.addEventListener("click", () => toast("Prototype: only Referrals is implemented here.")));
+$("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  ["overview", "program", "referrers", "segments", "install"].forEach((t) => $("t-" + t).hidden = t !== b.dataset.tab); });
+
+async function api(path, body) {
+  const res = await fetch(location.origin + path, body === undefined ? {} : { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) });
+  const data = await res.json().catch(() => ({ error:"Bad response" }));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+const opt = (map, sel) => Object.entries(map).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${esc(v)}</option>`).join("");
+
+function renderProgram() {
+  const c = S.catalog;
+  $("rules").innerHTML = program.rules.map((r, i) => `<div class="rule" data-i="${i}">
+    <span class="w">When</span><select data-f="trigger">${opt(c.triggers, r.trigger)}</select>
+    ${r.trigger === "paid_referrals_reached" ? `<span>N</span><input class="n" data-f="n" type="number" min="1" value="${r.n ?? 3}">` : ""}
+    <span class="w">give</span><select data-f="recipient">${opt(c.recipients, r.recipient)}</select><select data-f="action">${opt(c.actions, r.action)}</select>
+    ${r.action === "grant" ? `<input class="n" data-f="days" type="number" min="1" value="${r.days ?? 7}"><span>days</span>`
+      : `<input class="k" data-f="key" maxlength="30" placeholder="attribute key" value="${esc(r.key ?? "")}"><span>=</span><input class="v" data-f="value" maxlength="50" placeholder="value" value="${esc(r.value ?? "")}">`}
+    <button class="x" data-delrule="${i}" title="Remove">×</button></div>`).join("") || '<p class="sub">No rules: referrals are tracked, nobody is rewarded.</p>';
+  $("tiers").innerHTML = program.tiers.map((t, i) => `<div class="rule" data-t="${i}"><span class="w">Tier</span><input class="v" data-f="name" maxlength="20" value="${esc(t.name)}">
+    <span>from</span><input class="n" data-f="min_paid" type="number" min="1" value="${t.min_paid}"><span>paid referrals</span><button class="x" data-deltier="${i}">×</button></div>`).join("");
+  $("cap").value = program.max_rewarded_referrals;
+  const custom = [...new Set(program.rules.filter((r) => r.action === "set_attribute" && r.key).map((r) => r.key))];
+  $("attrs").innerHTML = [
+    ["referral_status", "Everyone", "referral_status IN referred"],
+    ["referred_by", "Friend", "referred_by IS NOT NULL"],
+    ["referrals_made", "Inviter", "referrals_made ≥ 1"],
+    ["referrals_paid", "Inviter", "referrals_paid ≥ 3"],
+    ["referral_tier", "Inviter", `referral_tier IN ${program.tiers.map((t) => t.name).join(", ") || "…"}`],
+    ...custom.map((k) => [k, "Set by your rules", `${k} IN …`]),
+  ].map(([k, on, f]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(on)}</td><td class="muted">${esc(f)}</td></tr>`).join("");
+}
+function readProgram() {
+  document.querySelectorAll("#rules .rule").forEach((el) => { const r = program.rules[+el.dataset.i];
+    el.querySelectorAll("[data-f]").forEach((f) => { r[f.dataset.f] = f.type === "number" ? +f.value : f.value; });
+    if (r.action === "grant") { r.days = r.days || 7; delete r.key; delete r.value; } else delete r.days;
+    if (r.trigger === "paid_referrals_reached") { r.recipient = "inviter"; r.n = r.n || 3; } else delete r.n; });
+  document.querySelectorAll("#tiers .rule").forEach((el) => { const t = program.tiers[+el.dataset.t];
+    el.querySelectorAll("[data-f]").forEach((f) => { t[f.dataset.f] = f.type === "number" ? +f.value : f.value; }); });
+  program.max_rewarded_referrals = +$("cap").value || 5;
+}
+document.addEventListener("change", (e) => { if (e.target.closest("#t-program")) { dirty = true; readProgram(); renderProgram(); } });
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "add-rule") { readProgram(); program.rules.push({ trigger:"install", recipient:"friend", action:"grant", days:7 }); dirty = true; return renderProgram(); }
+  if (b.dataset.delrule !== undefined) { readProgram(); program.rules.splice(+b.dataset.delrule, 1); dirty = true; return renderProgram(); }
+  if (b.id === "add-tier") { readProgram(); program.tiers.push({ name:"platinum", min_paid:10 }); dirty = true; return renderProgram(); }
+  if (b.dataset.deltier !== undefined) { readProgram(); program.tiers.splice(+b.dataset.deltier, 1); dirty = true; return renderProgram(); }
+  if (b.id === "save") { readProgram(); try { program = await api("/api/program", program); dirty = false; $("pmsg").innerHTML = '<div class="msg ok">Saved. New referrals use this program.</div>'; refresh(); } catch (err) { $("pmsg").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; } return; }
+  if (b.id === "defaults") { program = await api("/api/program/default", {}); dirty = false; $("pmsg").innerHTML = '<div class="msg ok">Defaults restored.</div>'; return refresh(); }
+  if (b.dataset.profile) return profile(b.dataset.profile, b.dataset.name);
+});
+
+async function profile(id, name) {
+  $("dlg-t").textContent = `${name}: Adapty profile`; $("dlg-b").innerHTML = '<p class="muted">Loading from Adapty…</p>'; $("dlg").showModal();
+  try { const r = await api(`/api/users/${id}/adapty`); const p = r.profile || {};
+    if (p.error) { $("dlg-b").innerHTML = `<pre>${esc(JSON.stringify(p.error, null, 2))}</pre>`; return; }
+    const attrs = Object.entries(p.custom_attributes || {}).map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v)}</td></tr>`).join("") || '<tr><td colspan="2" class="muted">none</td></tr>';
+    const acc = (p.access_levels || []).map((a) => `<tr><td><code>${esc(a.access_level_id)}</code></td><td>until ${esc(a.expires_at || "—")}</td></tr>`).join("") || '<tr><td colspan="2" class="muted">none</td></tr>';
+    const pw = r.paywall || {};
+    $("dlg-b").innerHTML = `<p class="sub">Custom attributes</p><table>${attrs}</table><p class="sub" style="margin-top:12px">Access levels</p><table>${acc}</table>
+      <p class="sub" style="margin-top:12px">Paywall on <code>${esc(S.placement)}</code>: <b>${esc(pw.paywall_name || (pw.error ? "error" : "—"))}</b></p>`;
+  } catch (err) { $("dlg-b").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+}
+
+function metric(k, v, s) { return `<div class="card metric"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`; }
+async function refresh() {
+  try { S = await api("/api/state"); } catch { return; }
+  $("mode").textContent = S.mode === "live" ? "Connected to Adapty" : "Offline mock"; $("mode").className = "mode " + S.mode;
+  $("pl").textContent = S.placement;
+  const r = S.stats.referred, o = S.stats.organic, st = S.stats;
+  $("metrics").innerHTML = metric("Links shared", st.shares, "Refer button taps") + metric("Invite opens", st.opens, "invite link visits")
+    + metric("Referred installs", r.users, `${o.users} organic`) + metric("Referred conversion", r.conversion + "%", `organic ${o.conversion}%`)
+    + metric("Revenue / referred user", money(r.revenue_per_user), `organic ${money(o.revenue_per_user)}`) + metric("Premium days granted", st.reward_days, "via access levels");
+  const steps = [["Links shared", st.shares], ["Invite opens", st.opens], ["Installs", r.users], ["Paid", r.paid]];
+  const max = Math.max(1, ...steps.map((s) => s[1]));
+  $("funnel").innerHTML = steps.map(([k, v]) => `<div class="row"><span>${k}</span><div class="bar"><i style="width:${(100 * v / max).toFixed(1)}%"></i></div><span class="n">${v}</span></div>`).join("");
+  $("cohorts").innerHTML = [["Referred", r], ["Organic", o]].map(([k, g]) => `<tr><td>${k}</td><td>${g.users}</td><td>${g.paid}</td><td>${g.conversion}%</td><td>${money(g.revenue_per_user)}</td></tr>`).join("");
+  $("events").innerHTML = S.events.map((e) => `<li><span class="t">${esc(e.at.slice(11, 16))}</span>${esc(e.text)}</li>`).join("") || '<li class="muted">No activity yet.</li>';
+  $("calls").innerHTML = S.calls.map((c) => `<li><span class="t">${esc(c.at)}</span><span class="${c.status >= 200 && c.status < 300 ? "ok" : "bad"}">${c.status || "ERR"}</span> <code>${esc(c.method)} ${esc(c.path)}</code> <span class="muted">${esc(c.note)}</span></li>`).join("") || '<li class="muted">No calls yet.</li>';
+  $("people").innerHTML = S.users.map((u) => `<tr><td><b>${esc(u.name)}</b><br><span class="muted">${esc(u.email)}</span></td><td><code>${esc(u.code)}</code><br><span class="muted">${u.shares} shares · ${u.opens} opens</span></td>
+      <td>${u.referred_by_name ? `${esc(u.referred_by_name)}${u.via ? `<br><span class="muted">via ${esc(u.via)}</span>` : ""}` : '<span class="pill gray">organic</span>'}</td>
+      <td>${u.invited ? `${u.invited} <span class="muted">(${u.invited_paid} paid)</span><br><span class="muted">${esc(u.invited_names)}</span>` : "—"}</td>
+      <td><span class="pill ${u.tier === "none" ? "gray" : ""}">${esc(u.tier)}</span></td><td>${u.reward_days ? u.reward_days + " days" : "—"}</td>
+      <td>${u.first_paid_at ? '<span class="pill good">paying</span>' : '<span class="pill gray">free</span>'}</td>
+      <td><button class="btn sm" data-profile="${u.id}" data-name="${esc(u.name)}">Adapty profile</button></td></tr>`).join("") || '<tr><td colspan="8" class="muted">No users yet. Install the app on a phone to start.</td></tr>';
+  if (!dirty && !document.activeElement?.closest?.("#t-program")) { program = JSON.parse(JSON.stringify(S.program)); renderProgram(); }
+}
+
+const appUrl = `${location.origin}/app`;
+$("applink").textContent = appUrl; $("applink").href = appUrl;
+$("apk").innerHTML = `<a href="/download/lumen.apk" class="muted">Android APK download</a>`;
+try { new QRCode($("qr"), { text:appUrl, width:180, height:180 }); } catch { $("qr").textContent = appUrl; }
+refresh(); setInterval(refresh, 4000);
+</script>
+</body>
+</html>

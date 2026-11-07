@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lumen">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="icon" href="/static/icon-192.png">
+<link id="manifest" rel="manifest" href="/manifest.webmanifest">
+<title>Lumen</title>
+<style>
+  :root { --ink:#14213d; --muted:#5f6b80; --line:#e6e3dc; --bg:#f6f4ef; --card:#fff; --purple:#6720ff; --orange:#c2410c; --good:#15803d; --soft:#f2edff; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; }
+  body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-height:100vh; }
+  .wrap { max-width:480px; margin:0 auto; padding:16px; }
+  .top { display:flex; align-items:center; gap:10px; padding:6px 0 14px; }
+  .top img { width:36px; height:36px; border-radius:9px; } .top b { font-size:20px; } .top .sp { flex:1; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:14px; }
+  .hero { background:linear-gradient(135deg,#6720ff,#c2410c); color:#fff; border:none; }
+  .hero p { color:#f3e9ff; }
+  h1 { font-size:24px; margin:4px 0 6px; } h2 { font-size:18px; margin:0 0 6px; }
+  p { margin:0 0 10px; color:var(--muted); }
+  label { display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
+  input { width:100%; font:inherit; padding:12px; border:1px solid var(--line); border-radius:12px; background:#fffdf9; color:var(--ink); }
+  button { font:inherit; cursor:pointer; border:none; border-radius:14px; padding:13px 16px; font-weight:700; width:100%; }
+  .primary { background:var(--purple); color:#fff; } .light { background:#fff; color:var(--purple); } .ghost { background:transparent; color:var(--muted); font-weight:500; padding:8px; }
+  .chip { display:inline-block; font-size:13px; font-weight:700; padding:4px 10px; border-radius:999px; background:#ebe7df; color:var(--muted); }
+  .chip.prem { background:#fff1d6; color:#8a4b00; } .chip.tier { background:var(--soft); color:var(--purple); }
+  .row { display:flex; gap:10px; align-items:center; } .row > * { flex:1; }
+  .stats { display:flex; gap:10px; margin:12px 0; } .stats div { flex:1; background:rgba(255,255,255,.16); border-radius:12px; padding:8px 10px; }
+  .stats b { display:block; font-size:22px; } .stats span { font-size:12px; }
+  .list { list-style:none; margin:0; padding:0; } .list li { display:flex; justify-content:space-between; gap:8px; padding:10px 0; border-bottom:1px solid var(--line); font-size:15px; }
+  .list li:last-child { border-bottom:none; } .list .s { color:var(--muted); font-size:13px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
+  .grid div { aspect-ratio:1; border-radius:10px; background:linear-gradient(135deg,#d9d2ff,#ffd9c2); }
+  .grid div:nth-child(2n) { background:linear-gradient(135deg,#c2e7ff,#e2d4ff); } .grid div:nth-child(3n) { background:linear-gradient(135deg,#ffe3b3,#ffc4c4); }
+  .banner { background:#fff1d6; border:1px solid #f5d48f; color:#5c3a00; border-radius:14px; padding:12px; margin-bottom:14px; font-size:15px; }
+  .ok { background:#e6f6ec; border:1px solid #b9e3c8; color:#14532d; border-radius:14px; padding:12px; margin-bottom:14px; font-size:15px; }
+  .err { background:#fde8e6; color:#9f1d17; border-radius:12px; padding:10px; margin-top:10px; font-size:14px; }
+  .sheet-bg { position:fixed; inset:0; background:rgba(20,33,61,.45); display:flex; align-items:flex-end; justify-content:center; z-index:10; }
+  .sheet { background:var(--card); width:100%; max-width:480px; border-radius:22px 22px 0 0; padding:20px 16px calc(20px + env(safe-area-inset-bottom)); max-height:92vh; overflow:auto; }
+  .plan { border:2px solid var(--line); border-radius:14px; padding:12px; margin:8px 0; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .plan.on { border-color:var(--purple); background:var(--soft); }
+  .pw-name { font-size:13px; color:var(--muted); }
+  .tiny { font-size:12px; color:var(--muted); text-align:center; margin-top:10px; }
+  code { background:#f1eee6; padding:2px 6px; border-radius:6px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="root"><p style="text-align:center;margin-top:40vh">Loading…</p></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} }, del(k) { try { localStorage.removeItem(k); } catch {} } };
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+let token = store.get("lumen_token"), me = null, ref = null, installEvt = null, notice = null;
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; render(); });
+
+async function api(path, body) {
+  const opts = { headers:{ "X-Token":token || "", "Content-Type":"application/json" } };
+  if (body !== undefined) { opts.method = "POST"; opts.body = JSON.stringify(body); }
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({ error:"Bad response" }));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+const inviteLink = () => `${location.origin}/r/${me.code}`;
+const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" });
+
+async function start() {
+  const qref = new URLSearchParams(location.search).get("ref");
+  if (qref) document.getElementById("manifest").href = `/manifest.webmanifest?ref=${encodeURIComponent(qref)}`;
+  if (token) {
+    try { me = await api("/api/app/me"); } catch { token = null; store.del("lumen_token"); }
+  }
+  if (!me) {
+    const saved = store.get("lumen_ref");
+    try { ref = await api(`/api/app/ref${qref || saved ? `?code=${encodeURIComponent(qref || saved)}` : ""}`); } catch { ref = null; }
+    if (ref && ref.code) store.set("lumen_ref", ref.code); else ref = null;
+  }
+  render();
+}
+
+function installCard() {
+  if (standalone) return "";
+  if (installEvt) return `<div class="card"><h2>Install Lumen</h2><p>Add the app to your home screen.</p><button class="primary" id="install">Install app</button></div>`;
+  if (isIOS) return `<div class="card"><h2>Install Lumen</h2><p>Tap <b>Share</b> <span aria-hidden="true">⎋</span> in Safari, then <b>Add to Home Screen</b>.</p></div>`;
+  return "";
+}
+
+function render() {
+  const root = $("root");
+  const head = `<div class="top"><img src="/static/icon-192.png" alt=""><b>Lumen</b><span class="sp"></span>${me ? `<span class="chip ${me.premium_until ? "prem" : ""}">${me.premium_until ? "Premium" : "Free"}</span>` : ""}</div>`;
+  if (!me) {
+    root.innerHTML = head + (ref ? `<div class="banner">🎁 <b>${esc(ref.inviter)}</b> invited you${ref.friend_days ? `. Sign up and get <b>${ref.friend_days} days of Premium</b> free` : ""}.</div>` : "") +
+      `<div class="card"><h1>AI photo editing, in a tap</h1><p>Create your account to start editing.</p>
+        <form id="signup"><label for="n">Name</label><input id="n" required autocomplete="given-name" placeholder="Your name">
+        <label for="e">Email</label><input id="e" type="email" required autocomplete="email" placeholder="you@example.com">
+        <div style="margin-top:14px"><button class="primary">Create account</button></div></form><div id="msg"></div></div>` + installCard() +
+      `<p class="tiny">Hackathon demo: purchases are simulated. Built on Adapty.</p>`;
+    $("signup").addEventListener("submit", signup);
+  } else {
+    const inv = me.invited || [];
+    const paidN = inv.filter((i) => i.first_paid_at).length;
+    root.innerHTML = head + (notice ? `<div class="ok">${notice}</div>` : "") +
+      `<div class="card"><h2>Hi, ${esc(me.name)}</h2>
+        <p>${me.premium_until ? `Premium until <b>${fmtDate(me.premium_until)}</b>.` : "You’re on the free plan."}${me.invited_by ? ` Invited by ${esc(me.invited_by)}.` : ""}</p>
+        <div class="grid"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <div style="margin-top:12px"><button class="primary" id="upgrade">${me.paid ? "Change plan" : "Go Premium"}</button></div></div>
+      <div class="card hero"><h2>Invite friends, get Premium</h2>
+        <p>${me.offer.friend_days ? `Friends get <b>${me.offer.friend_days} days</b> free.` : ""} ${me.offer.inviter_days ? `You get <b>${me.offer.inviter_days} days</b> when they subscribe.` : ""}</p>
+        <div class="stats"><div><b>${inv.length}</b><span>invited</span></div><div><b>${paidN}</b><span>subscribed</span></div><div><b>${esc(me.tier)}</b><span>tier</span></div></div>
+        <button class="light" id="share">Refer a friend</button>
+        <p style="margin:10px 0 0;font-size:13px">Your code: <b>${esc(me.code)}</b></p></div>
+      <div class="card"><h2>Your invites</h2>${inv.length ? `<ul class="list">${inv.map((i) => `<li><span>${esc(i.name)}<br><span class="s">${i.via ? "via " + esc(i.via) : "joined"}</span></span><span class="chip ${i.first_paid_at ? "prem" : ""}">${i.first_paid_at ? "subscribed" : "joined"}</span></li>`).join("")}</ul>` : "<p>No invites yet. Share your link!</p>"}</div>
+      ${me.rewards.length ? `<div class="card"><h2>Rewards</h2><ul class="list">${me.rewards.map((r) => `<li><span>${esc(r.detail)}<br><span class="s">${esc(r.reason)}</span></span></li>`).join("")}</ul></div>` : ""}
+      ${installCard()}
+      <button class="ghost" id="signout">Sign out (for testing)</button>
+      <p class="tiny">Hackathon demo · ${me.mode === "live" ? "connected to Adapty" : "offline mock"} · purchases are simulated</p>`;
+    $("share").addEventListener("click", share);
+    $("upgrade").addEventListener("click", openPaywall);
+    $("signout").addEventListener("click", () => { if (confirm("Sign out? This phone will forget the account.")) { store.del("lumen_token"); store.del("lumen_ref"); location.href = "/app"; } });
+  }
+  const ib = $("install"); if (ib) ib.addEventListener("click", async () => { installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(); });
+}
+
+async function signup(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector("button"); btn.disabled = true; btn.textContent = "Creating…";
+  try {
+    const r = await api("/api/app/signup", { name:$("n").value, email:$("e").value, ref:ref?.code || null });
+    token = r.token; store.set("lumen_token", token); store.del("lumen_ref");
+    me = await api("/api/app/me");
+    notice = r.referred_by ? `🎉 Welcome! ${esc(r.referred_by)} invited you.${(r.actions || []).filter((a) => a.to === me.name).map((a) => ` You got ${esc(a.detail)}.`).join("")}` : "Welcome to Lumen!";
+    render();
+  } catch (err) { $("msg").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; btn.textContent = "Create account"; }
+}
+
+async function share() {
+  const url = inviteLink();
+  const text = `Join me on Lumen, the AI photo editor.${me.offer.friend_days ? ` You get ${me.offer.friend_days} days of Premium free.` : ""}`;
+  if (navigator.share) {
+    try { await navigator.share({ title:"Lumen", text, url }); api("/api/app/share", { channel:"share-sheet" }).catch(() => {}); notice = "Invite sent!"; }
+    catch (err) { if (err.name !== "AbortError") notice = esc(err.message); }
+  } else {
+    try { await navigator.clipboard.writeText(`${text} ${url}`); notice = `Link copied: <code>${esc(url)}</code>`; api("/api/app/share", { channel:"copy-link" }).catch(() => {}); }
+    catch { notice = `Share this link: <code>${esc(url)}</code>`; }
+  }
+  render();
+}
+
+async function openPaywall() {
+  const bg = document.createElement("div"); bg.className = "sheet-bg";
+  bg.innerHTML = `<div class="sheet"><p style="text-align:center">Loading offer from Adapty…</p></div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener("click", (e) => { if (e.target === bg) bg.remove(); });
+  let pw; try { pw = await api("/api/app/paywall"); } catch (err) { pw = { error:err.message }; }
+  const referred = /referral/i.test(pw.paywall_name || "");
+  const plans = [["annual", "Annual", "$59.99 / year", "Best value"], ["monthly", "Monthly", "$9.99 / month", ""]];
+  let pick = referred ? "annual" : "monthly";
+  const draw = () => {
+    bg.querySelector(".sheet").innerHTML = `<h1>${referred ? "A gift from your friend" : "Unlock Premium"}</h1>
+      <p>${referred ? "Because you were invited, here’s our best plan first." : "Unlimited AI edits, no watermark, all filters."}</p>
+      ${plans.map(([id, t, p, tag]) => `<div class="plan ${pick === id ? "on" : ""}" data-p="${id}"><span><b>${t}</b><br><span class="s" style="color:var(--muted);font-size:14px">${p}</span></span>${tag ? `<span class="chip tier">${tag}</span>` : ""}</div>`).join("")}
+      <div style="margin-top:12px"><button class="primary" id="buy">Subscribe (simulated)</button></div>
+      <button class="ghost" id="close" style="margin-top:6px">Not now</button>
+      <p class="tiny">Paywall chosen by Adapty for you: <b>${esc(pw.paywall_name || (pw.error ? "unavailable" : "—"))}</b>${pw.products?.length ? ` · products: ${pw.products.map(esc).join(", ")}` : ""}<br>No real payment is made in this demo.</p>`;
+    bg.querySelectorAll(".plan").forEach((el) => el.addEventListener("click", () => { pick = el.dataset.p; draw(); }));
+    bg.querySelector("#close").addEventListener("click", () => bg.remove());
+    bg.querySelector("#buy").addEventListener("click", async (e) => {
+      e.target.disabled = true; e.target.textContent = "Processing…";
+      try { const r = await api("/api/app/purchase", { product:pick }); me = await api("/api/app/me");
+        notice = "You’re subscribed (simulated)." + (r.actions?.length ? ` Your inviter was rewarded.` : ""); bg.remove(); render();
+      } catch (err) { e.target.disabled = false; e.target.textContent = "Subscribe (simulated)"; alert(err.message); }
+    });
+  };
+  draw();
+}
+
+start();
+setInterval(async () => { if (token && document.visibilityState === "visible" && !document.querySelector(".sheet-bg")) { try { me = await api("/api/app/me"); render(); } catch {} } }, 8000);
+</script>
+</body>
+</html>

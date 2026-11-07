@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14213d">
+<meta property="og:title" content="{{NAME}} invited you to Lumen">
+<meta property="og:description" content="Install Lumen with this link and you both get Premium.">
+<meta property="og:image" content="/static/icon-512.png">
+<link rel="icon" href="/static/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest?ref={{CODE}}">
+<title>{{NAME}} invited you to Lumen</title>
+<style>
+  body { margin:0; background:#f6f4ef; color:#14213d; font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; display:flex; justify-content:center; padding:24px 16px; }
+  .card { background:#fff; border:1px solid #e6e3dc; border-radius:22px; padding:24px; max-width:420px; width:100%; text-align:center; }
+  img { width:84px; height:84px; border-radius:20px; }
+  h1 { font-size:23px; margin:10px 0 6px; } p { color:#5f6b80; margin:6px 0 14px; }
+  a.btn { display:block; text-decoration:none; padding:14px; border-radius:14px; font-weight:700; margin-top:10px; }
+  .primary { background:#6720ff; color:#fff; } .second { background:#f2edff; color:#6720ff; }
+  .steps { text-align:left; background:#f6f4ef; border-radius:14px; padding:12px 14px; font-size:15px; margin-top:12px; }
+  .steps ol { margin:4px 0 0; padding-left:20px; }
+  .err { background:#fde8e6; color:#9f1d17; border-radius:12px; padding:12px; }
+  .note { font-size:12px; color:#5f6b80; margin-top:18px; } code { background:#f1eee6; padding:1px 6px; border-radius:6px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <img src="/static/icon-512.png" alt="Lumen app icon">
+  <h1>{{NAME}} invited you to Lumen</h1>
+  <p>The AI photo editor. Install with this link and you both get Premium.</p>
+  <div id="cta"></div>
+  <p class="note">Hackathon demo. In production this link is an Adapty Attribution link that opens the App Store or Google Play, and the app reads code <code>{{CODE}}</code> on first launch.</p>
+</div>
+<script>
+const valid = "{{VALID}}" === "1", code = "{{CODE}}", hasApk = "{{APK}}" === "1";
+const ua = navigator.userAgent, ios = /iphone|ipad|ipod/i.test(ua), android = /android/i.test(ua);
+try { localStorage.setItem("lumen_ref", code); } catch {}
+const app = `/app?ref=${encodeURIComponent(code)}`;
+const cta = document.getElementById("cta");
+if (!valid) {
+  cta.innerHTML = `<div class="err">This invite link isn’t valid any more.</div><a class="btn second" href="/app">Open Lumen anyway</a>`;
+} else if (android) {
+  cta.innerHTML = (hasApk ? `<a class="btn primary" href="/download/lumen.apk">Download the Android app</a>
+      <div class="steps">After downloading: open the file, allow installs from your browser if asked, then open Lumen. Your invite is applied automatically.</div>` : "")
+    + `<a class="btn ${hasApk ? "second" : "primary"}" href="${app}">${hasApk ? "Or use the web app" : "Open Lumen"}</a>`;
+} else if (ios) {
+  cta.innerHTML = `<a class="btn primary" href="${app}">Open Lumen</a>
+    <div class="steps"><b>To install on iPhone:</b><ol><li>Open Lumen with the button above, in Safari.</li><li>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</li><li>Open Lumen from your home screen. Your invite stays applied.</li></ol></div>`;
+} else {
+  cta.innerHTML = `<a class="btn primary" href="${app}">Open Lumen</a><p style="margin-top:12px">Or open this link on your phone to install the app.</p>`;
+}
+</script>
+</body>
+</html>

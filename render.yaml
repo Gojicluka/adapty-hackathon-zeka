@@ -1,0 +1,25 @@
+# Render blueprint: New > Blueprint > pick this repo.
+services:
+  - type: web
+    name: lumen-referrals
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: "echo 'No dependencies: Python standard library only'"
+    startCommand: "python3 server.py"
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # Sandbox app's secret key: paste it in Render, never commit it.
+      - key: ADAPTY_SECRET_KEY
+        sync: false
+      # Password for /dashboard and /simulator (user name can be anything).
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADAPTY_PUBLIC_KEY
+        value: public_live_RJYbHI3U.4KTyAa71yQ6chGVoWZqK
+      - key: ADAPTY_PLACEMENT_ID
+        value: main_paywall
+      - key: ADAPTY_ACCESS_LEVEL
+        value: premium
