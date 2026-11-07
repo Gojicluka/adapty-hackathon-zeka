@@ -150,8 +150,8 @@
 
       <section id="t-segments" hidden>
         <div class="grid2">
-          <div><h3>Attributes written by Referrals</h3><p class="sub">Use them in <b>Profiles &amp; Segments</b>, then give each segment its own paywall in <b>Placements</b>.</p>
-            <table><thead><tr><th>Attribute</th><th>Profile</th><th>Example segment filter</th></tr></thead><tbody id="attrs"></tbody></table></div>
+          <div><h3>Attributes written by Referrals</h3><p class="sub">All of these live on the Adapty profile, and the filterable ones are registered as custom attributes, so they appear in Adapty’s segment editor. Build a segment in <a href="https://app.adapty.io/profiles/segments" target="_blank" rel="noopener" style="color:var(--purple)">Profiles &amp; Segments ↗</a>, then give it its own paywall in <a href="https://app.adapty.io/placements/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">Placements ↗</a>.</p>
+            <table><thead><tr><th>Attribute</th><th>Profile</th><th>Registered in Adapty as</th><th>Example segment filter</th></tr></thead><tbody id="attrs"></tbody></table></div>
           <div><h3>Live in this app</h3><p class="sub">Placement <code id="pl"></code> · <a href="https://app.adapty.io/placements/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">open in Adapty ↗</a> · <a href="https://app.adapty.io/profiles/segments" target="_blank" rel="noopener" style="color:var(--purple)">segments ↗</a> · <a href="https://app.adapty.io/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">paywall remote configs ↗</a></p>
             <table><thead><tr><th>Priority</th><th>Audience</th><th>Shows</th></tr></thead><tbody>
               <tr><td>#1</td><td>Serbia users</td><td>A/B test: monthly-first vs annual-first</td></tr>
@@ -206,14 +206,24 @@ function renderProgram() {
     <span>from</span><input class="n" data-f="min_paid" type="number" min="1" value="${t.min_paid}"><span>paid referrals</span><button class="x" data-deltier="${i}">×</button></div>`).join("");
   $("cap").value = program.max_rewarded_referrals;
   const custom = [...new Set(program.rules.filter((r) => r.action === "set_attribute" && r.key).map((r) => r.key))];
-  $("attrs").innerHTML = [
-    ["referral_status", "Everyone", "referral_status IN referred"],
-    ["referred_by", "Friend", "referred_by IS NOT NULL"],
-    ["referrals_made", "Inviter", "referrals_made ≥ 1"],
-    ["referrals_paid", "Inviter", "referrals_paid ≥ 3"],
-    ["referral_tier", "Inviter", `referral_tier IN ${program.tiers.map((t) => t.name).join(", ") || "…"}`],
-    ...custom.map((k) => [k, "Set by your rules", `${k} IN …`]),
-  ].map(([k, on, f]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(on)}</td><td class="muted">${esc(f)}</td></tr>`).join("");
+  // [key, profile, type registered in Adapty, example segment filter]
+  const rows = [
+    ["referral_status", "Everyone", "String: organic, referred, referrer", "Referral status = referred"],
+    ["referral_tier", "Inviter", `String: none, ${program.tiers.map((t) => t.name).join(", ") || "…"}`, "Referral tier = gold"],
+    ["referrals_made", "Inviter", "Number", "Referrals made ≥ 1"],
+    ["referrals_paid", "Inviter", "Number", "Referrals paid ≥ 3"],
+    ["referral_reward_days", "Both", "Number", "Referral reward days ≥ 14"],
+    ["referral_credit_days", "Inviter", "Number", "Referral credit days > 0"],
+    ["links_shared", "Inviter", "Number", "Links shared ≥ 1"],
+    ["link_opens", "Inviter", "Number", "Invite link opens ≥ 1"],
+    ["referral_reward_paid", "Friend", "String: yes", "Referral reward paid = yes"],
+    ["device_platform", "Everyone", "String: iOS, Android", "Device platform = Android"],
+    ["referral_vip", "Inviter (by rule)", "String: yes", "Referral VIP = yes"],
+    ["referral_code", "Everyone", "Not filterable (free text)", "shown on the profile"],
+    ["referred_by", "Friend", "Not filterable (free text)", "the inviter’s code"],
+    ...custom.filter((k) => k !== "referral_vip").map((k) => [k, "Set by your rules", "Register it in Adapty to filter on it", `${k} = …`]),
+  ];
+  $("attrs").innerHTML = rows.map(([k, on, type, f]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(on)}</td><td class="muted">${esc(type)}</td><td class="muted">${esc(f)}</td></tr>`).join("");
 }
 function readProgram() {
   document.querySelectorAll("#rules .rule").forEach((el) => { const r = program.rules[+el.dataset.i];

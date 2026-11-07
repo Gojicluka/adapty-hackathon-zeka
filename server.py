@@ -772,13 +772,11 @@ class Handler(BaseHTTPRequestHandler):
                 found = claim_ref(self._ip())
                 return {**ref_info(found), "how": "matched"} if found else {"code": None}
             return self._handle(find)
-        if path in ("/dashboard", "/simulator") or path.startswith("/api/"):
+        if path == "/dashboard" or path.startswith("/api/"):
             if self._need_admin():
                 return
         if path == "/dashboard":
             return self._file(STATIC / "dashboard.html")
-        if path == "/simulator":
-            return self._file(STATIC / "index.html")
         if path == "/api/state":
             return self._handle(state)
         m = re.fullmatch(r"/api/users/([A-Za-z0-9_]+)/adapty", path)
