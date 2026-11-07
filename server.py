@@ -20,10 +20,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-from adapty_client import CALL_LOG, AdaptyClient
+from adapty_client import CALL_LOG, PRODUCTS as ADAPTY_PRODUCTS, AdaptyClient
 
 ROOT = Path(__file__).resolve().parent
-PRODUCTS = {"monthly": 9.99, "annual": 59.99}  # simulated prices, USD
+PRODUCTS = {k: v["price"] for k, v in ADAPTY_PRODUCTS.items()}  # USD; purchases are recorded as Adapty transactions
 REFERRED_PAYWALL = "Referral welcome"
 
 TRIGGERS = {
@@ -127,6 +127,8 @@ def init_db():
             c.execute("INSERT INTO program (id, json) VALUES (1, ?)", (json.dumps(DEFAULT_PROGRAM),))
         # Columns added for the phone app; ignore if they already exist.
         for sql in ("ALTER TABLE users ADD COLUMN token TEXT",
+                    "ALTER TABLE users ADD COLUMN profile_id TEXT",
+                    "ALTER TABLE users ADD COLUMN last_variation TEXT",
                     "ALTER TABLE clicks ADD COLUMN ip TEXT",
                     "ALTER TABLE clicks ADD COLUMN ua TEXT",
                     "ALTER TABLE clicks ADD COLUMN claimed INTEGER NOT NULL DEFAULT 0"):
@@ -277,7 +279,7 @@ def sync_inviter(inviter_id, program):
 
 # ---------- actions ----------
 
-def create_user(name, email, code=None, via=None):
+def create_user(name, email, code=None, via=None, ip=None):
     """Sign up. With a code, this is a friend opening the app after installing through a link."""
     name, email, code = name.strip(), email.strip(), (code or "").strip().upper()
     if not name or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
@@ -308,9 +310,10 @@ def create_user(name, email, code=None, via=None):
 
     attrs = {"referral_status": "referred", "referred_by": inviter["code"]} if inviter else {"referral_status": "organic"}
     attrs["referrals_made"] = 0
-    ok, _ = ADAPTY.create_profile(cuid, email, attrs)
+    ok, created = ADAPTY.create_profile(cuid, email, name, attrs, ip)
     with LOCK, db() as c:
-        c.execute("UPDATE users SET adapty_synced = ? WHERE id = ?", (1 if ok else 0, uid))
+        c.execute("UPDATE users SET adapty_synced = ?, profile_id = ? WHERE id = ?",
+                  (1 if ok else 0, created.get("profile_id"), uid))
     actions = []
     if inviter:
         actions = run_rules("install", friend, inviter, program, context=f" ({name} via {inviter['name']})")
@@ -325,14 +328,18 @@ def purchase(user_id, product):
     if product not in PRODUCTS:
         raise Problem("Unknown product.")
     price, program = PRODUCTS[product], get_program()
-    with LOCK, db() as c:
+    with db() as c:
         u = user_by(c, id=user_id)
-        if not u:
-            raise Problem("No such user.")
+    if not u:
+        raise Problem("No such user.")
+    tx_ok, tx = ADAPTY.set_transaction(u["customer_user_id"], product, u["last_variation"])
+    if not tx_ok:
+        raise Problem("Adapty didn't accept the purchase. Check the server log.")
+    with LOCK, db() as c:
         first = u["first_paid_at"] is None
         c.execute("UPDATE users SET revenue = revenue + ?, first_paid_at = COALESCE(first_paid_at, ?) WHERE id = ?",
                   (price, now(), user_id))
-        event(c, "purchase", f"{u['name']} bought {product} (${price:.2f}, simulated)")
+        event(c, "purchase", f"{u['name']} subscribed: {product} (${price:.2f}), recorded in Adapty")
         friend = user_by(c, id=user_id)
         inviter = user_by(c, id=u["referred_by"]) if u["referred_by"] else None
     actions = []
@@ -370,7 +377,7 @@ def state():
     with db() as c:
         users = [dict(r) for r in c.execute(
             "SELECT u.id, u.name, u.email, u.code, u.customer_user_id, u.created_at, u.first_paid_at, u.revenue,"
-            " u.tier, u.via, u.adapty_synced, r.name AS referred_by_name,"
+            " u.tier, u.via, u.adapty_synced, u.profile_id, r.name AS referred_by_name,"
             " (SELECT COUNT(*) FROM users x WHERE x.referred_by = u.id) AS invited,"
             " (SELECT COUNT(*) FROM users x WHERE x.referred_by = u.id AND x.first_paid_at IS NOT NULL) AS invited_paid,"
             " (SELECT GROUP_CONCAT(x.name, ', ') FROM users x WHERE x.referred_by = u.id) AS invited_names,"
@@ -458,9 +465,16 @@ def app_me(token):
 
 
 def app_paywall(token):
+    """The paywall Adapty chose for this user, with its remote config. Logs the view in Adapty."""
     u = user_by_token(token)
     ok, pw = ADAPTY.get_paywall(u["customer_user_id"])
-    return pw if ok else {"error": pw}
+    if not ok:
+        return {"error": pw}
+    if pw.get("variation_id"):
+        with LOCK, db() as c:
+            c.execute("UPDATE users SET last_variation = ? WHERE id = ?", (pw["variation_id"], u["id"]))
+        ADAPTY.record_paywall_view(u["customer_user_id"], pw["variation_id"])
+    return pw
 
 
 def record_invite_click(code, ip, ua):
@@ -684,7 +698,8 @@ class Handler(BaseHTTPRequestHandler):
             def signup():
                 b = self._body()
                 code = (b.get("ref") or "").strip().upper() or None
-                r = create_user(b.get("name", ""), b.get("email", ""), code, b.get("via") or ("Link" if code else None))
+                r = create_user(b.get("name", ""), b.get("email", ""), code, b.get("via") or ("Link" if code else None),
+                                self._ip())
                 if code:
                     mark_claimed(code, self._ip())
                 return {"token": r["token"], "actions": r["actions"], "referred_by": r["referred_by"]}
@@ -713,8 +728,21 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, {"error": "Not found"})
 
 
+def setup_adapty():
+    """Make sure the paywalls' copy lives in Adapty as remote config (runs once at start)."""
+    try:
+        results = ADAPTY.ensure_remote_configs()
+    except Exception as e:  # never block the demo on setup
+        results = [f"setup failed: {e}"]
+    if results:
+        print("Adapty setup: " + "; ".join(results), flush=True)
+        with LOCK, db() as c:
+            event(c, "setup", "Adapty paywall remote configs: " + "; ".join(results))
+
+
 def main():
     init_db()
+    threading.Thread(target=setup_adapty, daemon=True).start()
     port = int(ENV.get("PORT", 8080))
     print(f"Lumen Referrals on http://0.0.0.0:{port}  mode={'MOCK (no secret key)' if ADAPTY.mock else 'LIVE'}"
           f"  placement={ADAPTY.placement_id}  db={DB_PATH}  admin={'password' if ADMIN_PASSWORD else 'open'}",

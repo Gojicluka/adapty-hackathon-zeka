@@ -162,23 +162,26 @@ async function openPaywall() {
   document.body.appendChild(bg);
   bg.addEventListener("click", (e) => { if (e.target === bg) bg.remove(); });
   let pw; try { pw = await api("/api/app/paywall"); } catch (err) { pw = { error:err.message }; }
-  const referred = /referral/i.test(pw.paywall_name || "");
-  const plans = [["annual", "Annual", "$59.99 / year", "Best value"], ["monthly", "Monthly", "$9.99 / month", ""]];
-  let pick = referred ? "annual" : "monthly";
+  // Copy and plan order come from the paywall's remote config in Adapty; products from the paywall itself.
+  const rc = pw.remote_config || {};
+  const fallback = [{ key:"monthly", label:"Monthly", price:9.99, days:30 }, { key:"annual", label:"Annual", price:59.99, days:365 }];
+  const products = (pw.products && pw.products.length ? pw.products : fallback);
+  let pick = products.some((p) => p.key === rc.highlight) ? rc.highlight : products[0].key;
+  const per = (p) => p.days >= 365 ? "year" : "month";
   const draw = () => {
-    bg.querySelector(".sheet").innerHTML = `<h1>${referred ? "A gift from your friend" : "Unlock Premium"}</h1>
-      <p>${referred ? "Because you were invited, here’s our best plan first." : "Unlimited AI edits, no watermark, all filters."}</p>
-      ${plans.map(([id, t, p, tag]) => `<div class="plan ${pick === id ? "on" : ""}" data-p="${id}"><span><b>${t}</b><br><span class="s" style="color:var(--muted);font-size:14px">${p}</span></span>${tag ? `<span class="chip tier">${tag}</span>` : ""}</div>`).join("")}
-      <div style="margin-top:12px"><button class="primary" id="buy">Subscribe (simulated)</button></div>
+    bg.querySelector(".sheet").innerHTML = `<h1>${esc(rc.title || "Unlock Premium")}</h1>
+      <p>${esc(rc.subtitle || "Unlimited AI edits, no watermark, every filter.")}</p>
+      ${products.map((p) => `<div class="plan ${pick === p.key ? "on" : ""}" data-p="${esc(p.key)}"><span><b>${esc(p.title || p.label)}</b><br><span class="s" style="color:var(--muted);font-size:14px">$${Number(p.price).toFixed(2)} / ${per(p)}</span></span>${p.key === rc.highlight && rc.badge ? `<span class="chip tier">${esc(rc.badge)}</span>` : ""}</div>`).join("")}
+      <div style="margin-top:12px"><button class="primary" id="buy">${esc(rc.cta || "Subscribe")}</button></div>
       <button class="ghost" id="close" style="margin-top:6px">Not now</button>
-      <p class="tiny">Paywall chosen by Adapty for you: <b>${esc(pw.paywall_name || (pw.error ? "unavailable" : "—"))}</b>${pw.products?.length ? ` · products: ${pw.products.map(esc).join(", ")}` : ""}<br>No real payment is made in this demo.</p>`;
+      <p class="tiny">Paywall chosen by Adapty: <b>${esc(pw.paywall_name || (pw.error ? "unavailable" : "—"))}</b>${pw.ab_test_name ? ` · A/B test: ${esc(pw.ab_test_name)}` : ""}<br>Demo: the purchase is recorded in Adapty as a transaction, no money is charged.</p>`;
     bg.querySelectorAll(".plan").forEach((el) => el.addEventListener("click", () => { pick = el.dataset.p; draw(); }));
     bg.querySelector("#close").addEventListener("click", () => bg.remove());
     bg.querySelector("#buy").addEventListener("click", async (e) => {
       e.target.disabled = true; e.target.textContent = "Processing…";
       try { const r = await api("/api/app/purchase", { product:pick }); me = await api("/api/app/me");
-        notice = "You’re subscribed (simulated)." + (r.actions?.length ? ` Your inviter was rewarded.` : ""); bg.remove(); render();
-      } catch (err) { e.target.disabled = false; e.target.textContent = "Subscribe (simulated)"; alert(err.message); }
+        notice = "You’re subscribed! (demo purchase, recorded in Adapty)" + (r.actions?.length ? " Your inviter was rewarded." : ""); bg.remove(); render();
+      } catch (err) { e.target.disabled = false; e.target.textContent = rc.cta || "Subscribe"; alert(err.message); }
     });
   };
   draw();

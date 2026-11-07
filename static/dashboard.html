@@ -22,6 +22,7 @@
   .nav { display:flex; align-items:center; gap:10px; height:36px; padding:0 10px; border-radius:6px; color:var(--nav); font-weight:500; cursor:pointer; text-decoration:none; }
   .nav:hover { background:var(--hover); } .nav.on { background:var(--hover); }
   .nav svg { width:18px; height:18px; flex:none; stroke:#6b6b76; fill:none; stroke-width:1.7; }
+  .nav svg.ext { width:13px; height:13px; margin-left:auto; opacity:0; } .nav:hover svg.ext { opacity:.8; }
   .badge-new { margin-left:auto; font-size:12px; font-weight:500; color:var(--blue); background:var(--blue-soft); border:1px solid var(--blue-line); border-radius:4px; padding:1px 7px; }
   .content { flex:1; min-width:0; display:flex; flex-direction:column; }
   .topbar { height:49px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; padding:0 24px; }
@@ -71,29 +72,29 @@
 </style>
 </head>
 <body>
-<div class="proto"><b>Prototype</b> built at the Adapty Hackathon Belgrade · Referrals is a proposed feature, not part of Adapty · other menu items are placeholders</div>
+<div class="proto"><b>Prototype</b> built at the Adapty Hackathon Belgrade · only <b>Referrals</b> is new · every other item opens the real Adapty dashboard (select “Teodor sandbox (test)” there)</div>
 <div class="shell">
   <aside>
     <div class="brand"><span class="dot"></span>adapty<small>prototype</small></div>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Overview</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5"/></svg>Profiles &amp; Segments</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg>Products</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 18h6"/></svg>Flows &amp; Paywalls</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>Placements</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>Retention Messaging</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M6 3v18M18 3v18M6 8h12M6 16h12"/></svg>A/B tests</a>
+    <a class="nav" href="https://app.adapty.io/overview" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Overview<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/analytics/charts/revenue" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/profiles/users" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5"/></svg>Profiles &amp; Segments<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/products" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg>Products<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/paywalls" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 18h6"/></svg>Flows &amp; Paywalls<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/placements/paywalls" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>Placements<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/retention-messaging" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>Retention Messaging<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/ab-tests/paywalls" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M6 3v18M18 3v18M6 8h12M6 16h12"/></svg>A/B tests<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
     <a class="nav on"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4"/></svg>Referrals<span class="badge-new">New</span></a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>AI Growth Advisor</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/></svg>Integrations</a>
-    <a class="nav" data-ph><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Event feed</a>
+    <a class="nav" href="https://app.adapty.io/recommendations" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>AI Growth Advisor<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/integrations" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/></svg>Integrations<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+    <a class="nav" href="https://app.adapty.io/event-feed" target="_blank" rel="noopener" title="Opens the real Adapty dashboard"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Event feed<svg class="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
   </aside>
   <div class="content">
     <div class="topbar">
       <div class="app"><span class="l">L</span>Lumen - AI Photo Editor (Hackathon)</div>
       <span id="mode" class="mode mock">…</span>
       <span class="sp"></span>
-      <a data-ph>Help</a><a data-ph>App settings</a><a data-ph>Account</a>
+      <a href="https://app.adapty.io/settings/general" target="_blank" rel="noopener">App settings ↗</a><a href="https://app.adapty.io/account" target="_blank" rel="noopener">Account ↗</a>
     </div>
     <main>
       <div class="h"><h2>Referrals</h2><a data-ph>Read the docs</a></div>
@@ -107,12 +108,12 @@
         <div class="cards" id="metrics"></div>
         <div class="grid2">
           <div class="card funnel"><h3>Referral funnel</h3><p class="sub">From the Refer button to a paying friend.</p><div id="funnel"></div></div>
-          <div class="card"><h3>Referred vs organic</h3><p class="sub">Purchases are simulated in this demo.</p>
+          <div class="card"><h3>Referred vs organic</h3><p class="sub">Demo purchases are recorded in Adapty as transactions.</p>
             <table><thead><tr><th>Cohort</th><th>Users</th><th>Paid</th><th>Conversion</th><th>Revenue / user</th></tr></thead><tbody id="cohorts"></tbody></table></div>
         </div>
         <div class="grid2" style="margin-top:16px">
           <div class="card"><h3>Activity</h3><ul class="feed" id="events"></ul></div>
-          <div class="card"><h3>Adapty API calls</h3><p class="sub">Server-side and web API calls made by the referral service.</p><ul class="feed" id="calls"></ul></div>
+          <div class="card"><h3>Adapty API calls</h3><p class="sub">Calls made by the referral service. Purchases, profiles and paywall views land in Adapty: see <a href="https://app.adapty.io/event-feed" target="_blank" rel="noopener" style="color:var(--purple)">Event feed ↗</a> and <a href="https://app.adapty.io/analytics/charts/revenue" target="_blank" rel="noopener" style="color:var(--purple)">Analytics ↗</a>.</p><ul class="feed" id="calls"></ul></div>
         </div>
       </section>
 
@@ -151,7 +152,7 @@
         <div class="grid2">
           <div><h3>Attributes written by Referrals</h3><p class="sub">Use them in <b>Profiles &amp; Segments</b>, then give each segment its own paywall in <b>Placements</b>.</p>
             <table><thead><tr><th>Attribute</th><th>Profile</th><th>Example segment filter</th></tr></thead><tbody id="attrs"></tbody></table></div>
-          <div><h3>Live in this app</h3><p class="sub">Placement <code id="pl"></code></p>
+          <div><h3>Live in this app</h3><p class="sub">Placement <code id="pl"></code> · <a href="https://app.adapty.io/placements/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">open in Adapty ↗</a> · <a href="https://app.adapty.io/profiles/segments" target="_blank" rel="noopener" style="color:var(--purple)">segments ↗</a> · <a href="https://app.adapty.io/paywalls" target="_blank" rel="noopener" style="color:var(--purple)">paywall remote configs ↗</a></p>
             <table><thead><tr><th>Priority</th><th>Audience</th><th>Shows</th></tr></thead><tbody>
               <tr><td>#1</td><td>Serbia users</td><td>A/B test: monthly-first vs annual-first</td></tr>
               <tr><td>#2</td><td><b>Referred users</b> <span class="pill">referrals</span></td><td>Referral welcome</td></tr>
@@ -267,7 +268,7 @@ async function refresh() {
       <td>${u.invited ? `${u.invited} <span class="muted">(${u.invited_paid} paid)</span><br><span class="muted">${esc(u.invited_names)}</span>` : "—"}</td>
       <td><span class="pill ${u.tier === "none" ? "gray" : ""}">${esc(u.tier)}</span></td><td>${u.reward_days ? u.reward_days + " days" : "—"}</td>
       <td>${u.first_paid_at ? '<span class="pill good">paying</span>' : '<span class="pill gray">free</span>'}</td>
-      <td><button class="btn sm" data-profile="${u.id}" data-name="${esc(u.name)}">Adapty profile</button></td></tr>`).join("") || '<tr><td colspan="8" class="muted">No users yet. Install the app on a phone to start.</td></tr>';
+      <td>${u.profile_id ? `<a class="btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="https://app.adapty.io/profiles/users/${encodeURIComponent(u.profile_id)}" target="_blank" rel="noopener">Open in Adapty ↗</a>` : '<span class="muted">not in Adapty</span>'}</td></tr>`).join("") || '<tr><td colspan="8" class="muted">No users yet. Install the app on a phone to start.</td></tr>';
   if (!dirty && !document.activeElement?.closest?.("#t-program")) { program = JSON.parse(JSON.stringify(S.program)); renderProgram(); }
 }
 
