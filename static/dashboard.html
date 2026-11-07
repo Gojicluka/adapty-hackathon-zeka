@@ -286,7 +286,7 @@ const appUrl = `${location.origin}/app`;
 $("applink").textContent = appUrl; $("applink").href = appUrl;
 $("apk").innerHTML = `<a href="/download/lumen.apk" class="muted">Android APK download</a>`;
 try { new QRCode($("qr"), { text:appUrl, width:180, height:180 }); } catch { $("qr").textContent = appUrl; }
-refresh(); setInterval(refresh, 4000);
+refresh(); setInterval(refresh, 10000);
 </script>
 </body>
 </html>

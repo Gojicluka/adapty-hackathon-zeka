@@ -228,18 +228,21 @@ def get_program(fresh=False):
     if not fresh and _program_cache["value"] and time.time() - _program_cache["at"] < 20:
         return _program_cache["value"]
     pid = settings_paywall_id()
-    value = None
+    value, empty = None, False
     if pid:
         try:
             raw = ADAPTY.read_remote_config(pid)
-            value = validate_program(raw) if raw.get("rules") is not None else None
+            empty = not raw
+            value = validate_program(raw) if raw else None
         except (RuntimeError, Problem, ValueError) as e:
-            print(f"Program read failed, using the last good one: {e}", flush=True)
+            # Unreadable or invalid program in Adapty: keep running on the last good one, and
+            # never overwrite what someone saved there (they may be mid-edit).
+            print(f"Program in Adapty is invalid or unreadable, using the last good one: {e}", flush=True)
             value = _program_cache["value"]
     if value is None:
         value = _program_cache["value"] or json.loads(json.dumps(DEFAULT_PROGRAM))
-        if pid and not ADAPTY.mock:
-            ADAPTY.write_remote_config(pid, value, note="default program")
+        if pid and empty and not ADAPTY.mock:
+            ADAPTY.write_remote_config(pid, value, note="default program (remote config was empty)")
     _program_cache.update(at=time.time(), value=value)
     return value
 
@@ -544,11 +547,14 @@ def app_paywall(cuid):
 
 # ---------- admin ----------
 
+# One GET profile per known user per refresh: keep this cached so several open dashboards
+# don't multiply calls to Adapty (hackathon rule: be nice to the APIs).
+STATE_CACHE_SECONDS = 15
 _state_cache = {"at": 0.0, "value": None}
 
 
 def state():
-    if _state_cache["value"] and time.time() - _state_cache["at"] < 4:
+    if _state_cache["value"] and time.time() - _state_cache["at"] < STATE_CACHE_SECONDS:
         return _state_cache["value"]
     with db() as c:
         people = [dict(r) for r in c.execute("SELECT * FROM people ORDER BY created_at")]

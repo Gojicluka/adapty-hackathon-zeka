@@ -28,7 +28,7 @@ Team Zeka, Adapty Hackathon Belgrade, 7–8 November 2026. Code freeze **Sunday 
 | `.github/workflows/deploy.yml` | CI: compile + smoke test in mock mode, then trigger the Render deploy on `main` |
 | `docs/` | Architecture, Adapty setup, operations & secrets, demo script |
 
-Read `docs/ARCHITECTURE.md` before changing flows, `docs/ADAPTY_SETUP.md` before touching anything in Adapty.
+Read `docs/ARCHITECTURE.md` before changing flows, `docs/ADAPTY_SETUP.md` before touching anything in Adapty, and **`docs/KNOWN_ISSUES.md` before starting any feature** (team workflow, shared sandbox, Adapty quirks). Tool and MCP setup for Claude Code and Codex: `docs/AGENT_TOOLS.md`.
 
 ## Run, test, deploy
 
@@ -57,8 +57,11 @@ python3 scripts/smoke_test.py http://localhost:8080 # must print "ALL CHECKS PAS
 7. **Hackathon rules:** code must be written during the event (it was, 7–8 Nov); only demo/synthetic data; no load tests or scraping of Adapty's APIs; keep secrets in `.env`.
 8. Before pushing: `python3 -m py_compile server.py adapty_client.py` and the smoke test against a local mock server. Small commits, clear messages.
 
-## Adapty tools for agents
+## Tools for agents
 
-- **Adapty CLI:** `npm install -g adapty@latest`, then `adapty auth login` with your own Adapty account (invited to the team company). Useful: `adapty apps list`, `adapty paywalls list --app <id>`, `adapty placements get --app <id> <placement-id> --json`, `adapty segments list --app <id>`.
-- **Adapty skills + MCP** (Claude Code; Codex/Gemini via `npx skills@1.7.0 add adaptyteam/adapty-skills --all --global`): `adapty skills install --agent claude-code`, and the MCP server `https://mcp.adapty.io/mcp` (OAuth sign-in). The skills hold Adapty's own workflows for A/B tests, segments, flows and docs lookup.
-- Adapty docs for agents: add `.md` to any docs URL; indexes at `https://adapty.io/docs/api-llms.txt` (APIs/CLI) and `https://adapty.io/docs/tutorial-llms.txt` (dashboard features).
+Full setup for Claude Code and Codex in **`docs/AGENT_TOOLS.md`**. In short:
+- `npx adapty skills install` — Adapty's skills **and** its MCP server (`https://mcp.adapty.io/mcp`, sign in with your own Adapty account).
+- Adapty CLI: `npm install -g adapty@latest && adapty auth login`.
+- Playwright MCP (`.mcp.json` declares it for Claude Code; `codex mcp add playwright -- npx -y @playwright/mcp@latest` for Codex) for dashboard-only tasks like registering custom attributes.
+- `gh` for Actions runs and logs.
+- Adapty docs for agents: add `.md` to any docs URL; indexes at `https://adapty.io/docs/api-llms.txt` and `https://adapty.io/docs/tutorial-llms.txt`.
