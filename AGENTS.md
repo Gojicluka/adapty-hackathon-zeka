@@ -26,6 +26,7 @@ Team Zeka, Adapty Hackathon Belgrade, 7–8 November 2026. Code freeze **Sunday 
 | `scripts/smoke_test.py` | End-to-end check of signup → referral → purchase → reward |
 | `render.yaml` | Render service definition |
 | `.github/workflows/deploy.yml` | CI: compile + smoke test in mock mode, then trigger the Render deploy on `main` |
+| `.github/workflows/keepalive.yml` | Pings `/healthz` every 10 minutes so Render's free plan doesn't sleep |
 | `docs/` | Architecture, Adapty setup, operations & secrets, demo script |
 
 Read `docs/ARCHITECTURE.md` before changing flows, `docs/ADAPTY_SETUP.md` before touching anything in Adapty, and **`docs/KNOWN_ISSUES.md` before starting any feature** (team workflow, shared sandbox, Adapty quirks). Tool and MCP setup for Claude Code and Codex: `docs/AGENT_TOOLS.md`.
