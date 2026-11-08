@@ -9,7 +9,8 @@ Adapty has no referral feature, but its docs describe the grant-access endpoint 
 - **Agents (Codex, Claude Code):** start with [`AGENTS.md`](AGENTS.md) (Claude Code reads it through [`CLAUDE.md`](CLAUDE.md)).
 - **Docs:** [architecture](docs/ARCHITECTURE.md) · [Adapty setup and IDs](docs/ADAPTY_SETUP.md) · [environment, secrets, deploys](docs/OPERATIONS.md) · [demo guide](docs/DEMO.md) · [known issues](docs/KNOWN_ISSUES.md) · [agent tools & MCP](docs/AGENT_TOOLS.md).
 - **Deploys:** merge to `main`; GitHub Actions tests and redeploys Render. No Render login needed.
-- **Check everything works:** `python3 server.py` then `python3 scripts/smoke_test.py`.
+- **Check everything works:** `python3 -m unittest discover -s tests` (unit tests, no server or keys needed), then `python3 server.py` and `python3 scripts/smoke_test.py`.
+- **How we used AI:** [`AI_LOG.md`](AI_LOG.md).
 
 ## How it uses Adapty
 
