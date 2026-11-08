@@ -39,7 +39,7 @@ Pull requests run steps 1–2 only. If the secret isn't set, step 3 is skipped w
 
 ## Keeping it awake
 
-Render's free plan sleeps after 15 minutes without traffic (first request then takes ~50 s, and the index is wiped). `.github/workflows/keepalive.yml` pings `/healthz` every 10 minutes from GitHub (scheduled runs can be a few minutes late). Teodor's PC runs a backup timer while it's on. Disable the workflow after the event (Actions → Keep the demo awake → Disable).
+Render's free plan sleeps after 15 minutes without traffic (first request then takes ~50 s, and the index is wiped). Teodor's PC pings `/healthz` every 10 minutes while it's on and in CachyOS; that's the dependable keep-alive. `.github/workflows/keepalive.yml` asks for the same from GitHub, but GitHub runs it far less often (about 6 hours apart overnight on 7–8 Nov), so don't rely on it alone. Open the site a minute before the demo. Disable the workflow after the event (Actions → Keep the demo awake → Disable).
 
 ## Logs and checks
 
