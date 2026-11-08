@@ -39,7 +39,8 @@ python3 scripts/smoke_test.py http://localhost:8080 # must print "ALL CHECKS PAS
 ```
 
 - **Live mode locally:** put the sandbox app's secret key in `.env` (see `docs/OPERATIONS.md`). Local servers don't receive Adapty's webhook; inviter rewards then come from the 25-second fallback.
-- **Deploy:** push (or merge a PR) to `main`. GitHub Actions runs the checks and triggers Render. Nobody needs a Render login. A deploy **wipes the demo's local index** (users list on the dashboard, clicks, activity); everything in Adapty stays.
+- **Branches:** every feature or fix goes on its own branch off an up-to-date `main` (`feature/...`, `fix/...`), never directly on `main`. Team decision. Push the branch and open a PR; CI runs the checks on the PR. Don't merge unless a human asks.
+- **Deploy:** merging to `main` is the deploy. GitHub Actions runs the checks and triggers Render. Nobody needs a Render login. A deploy **wipes the demo's local index** (users list on the dashboard, clicks, activity); everything in Adapty stays.
 - **No dependencies.** Keep it standard-library Python and plain HTML/JS: no build step, no `pip install`, no npm.
 
 ## Rules for agents
@@ -56,7 +57,7 @@ python3 scripts/smoke_test.py http://localhost:8080 # must print "ALL CHECKS PAS
 5. **Customer user IDs are derived from the email** (`lumen_<8 hex>`), referral codes are `NAME-<same 8 hex>`. Changing either scheme orphans every existing profile — don't.
 6. **Purchases are demo transactions** (no real payment), but they count as revenue in the sandbox app. Keep test purchases few.
 7. **Hackathon rules:** code must be written during the event (it was, 7–8 Nov); only demo/synthetic data; no load tests or scraping of Adapty's APIs; keep secrets in `.env`.
-8. Before pushing: `python3 -m py_compile server.py adapty_client.py` and the smoke test against a local mock server. Small commits, clear messages.
+8. Work on a branch, never on `main` (see Branches above). Before pushing: `python3 -m py_compile server.py adapty_client.py` and the smoke test against a local mock server. Small commits, clear messages.
 
 ## Tools for agents
 

@@ -24,7 +24,9 @@ Locally: `cp .env.example .env` and fill in. Without `ADAPTY_SECRET_KEY` the ser
 
 ## Deploys (no Render login needed)
 
-`.github/workflows/deploy.yml`, on every push to `main`:
+Features and fixes go on their own branches and reach `main` through a pull request; nothing is committed directly to `main`.
+
+`.github/workflows/deploy.yml`, on every merge to `main`:
 1. Compiles the Python files.
 2. Starts the server in mock mode and runs `scripts/smoke_test.py` against it.
 3. If both pass, calls the Render **deploy hook** stored in the repo secret `RENDER_DEPLOY_HOOK_URL`; Render then pulls `main` from this (public) repo and restarts in about a minute.
