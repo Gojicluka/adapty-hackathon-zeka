@@ -8,7 +8,8 @@ Adapty has no referral feature, but its docs describe the grant-access endpoint 
 
 - **Agents (Codex, Claude Code):** start with [`AGENTS.md`](AGENTS.md) (Claude Code reads it through [`CLAUDE.md`](CLAUDE.md)).
 - **Docs:** [architecture](docs/ARCHITECTURE.md) · [Adapty setup and IDs](docs/ADAPTY_SETUP.md) · [environment, secrets, deploys](docs/OPERATIONS.md) · [demo guide](docs/DEMO.md) · [known issues](docs/KNOWN_ISSUES.md) · [agent tools & MCP](docs/AGENT_TOOLS.md).
-- **Deploys:** merge to `main`; GitHub Actions tests and redeploys Render. No Render login needed.
+- **Branches:** every feature or fix goes on its own branch, then a pull request. Nothing goes directly on `main`.
+- **Deploys:** merging to `main` deploys; GitHub Actions tests and redeploys Render. No Render login needed.
 - **Check everything works:** `python3 -m unittest discover -s tests` (unit tests, no server or keys needed), then `python3 server.py` and `python3 scripts/smoke_test.py`.
 - **How we used AI:** [`AI_LOG.md`](AI_LOG.md).
 
@@ -74,7 +75,7 @@ python3 server.py        # http://localhost:8080
 
 ## Deploy on Render
 
-Pushing to `main` deploys: `.github/workflows/deploy.yml` compiles, runs the smoke test in mock mode, then calls Render's deploy hook (repo secret `RENDER_DEPLOY_HOOK_URL`). Setup and secrets: [docs/OPERATIONS.md](docs/OPERATIONS.md). `render.yaml` documents the service. The free plan sleeps after 15 minutes without visits and doesn't keep its disk, so the demo's **index** resets on sleep or deploy; Adapty keeps all profiles, attributes, purchases and the program.
+Merging to `main` deploys (work happens on branches): `.github/workflows/deploy.yml` compiles, runs the smoke test in mock mode, then calls Render's deploy hook (repo secret `RENDER_DEPLOY_HOOK_URL`). Setup and secrets: [docs/OPERATIONS.md](docs/OPERATIONS.md). `render.yaml` documents the service. The free plan sleeps after 15 minutes without visits and doesn't keep its disk, so the demo's **index** resets on sleep or deploy; Adapty keeps all profiles, attributes, purchases and the program.
 
 ## Demo script (about 3 minutes)
 
