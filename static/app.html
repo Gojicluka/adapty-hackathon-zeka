@@ -336,6 +336,16 @@ async function share() {
   const url = inviteLink();
   const button = $("share"); button.disabled = true;
   try {
+    const mobile = isIOS || /android/i.test(navigator.userAgent) || matchMedia("(max-width:800px)").matches;
+    if (mobile && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title:"Lumen", url });
+        api("/api/app/share", { channel:"share-sheet" }).catch(() => {});
+        return;
+      } catch (err) {
+        if (err.name === "AbortError") return;
+      }
+    }
     try { await navigator.clipboard.writeText(url); }
     catch {
       const input = document.createElement("textarea");

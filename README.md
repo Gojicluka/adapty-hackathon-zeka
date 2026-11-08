@@ -1,6 +1,6 @@
 # adapty-hackathon-zeka: referral programs on Adapty
 
-A user taps **Refer a friend**, the invite link is copied to the clipboard with a confirmation bubble, and they paste it into a message. The friend installs through it. Both users get referral data on their **Adapty profiles**, the **app owner decides the rewards**, and Adapty segments on that data so referred users, top referrers and tiers can each get their own paywall.
+A user taps **Refer a friend**: mobile opens the native app share menu where supported; desktop copies the invite link with a confirmation bubble. Mobile also falls back to copying if native sharing is unavailable. The friend installs through the link. Both users get referral data on their **Adapty profiles**, the **app owner decides the rewards**, and Adapty segments on that data so referred users, top referrers and tiers can each get their own paywall.
 
 Adapty has no referral feature, but its docs describe the grant-access endpoint as handy "if you have bonuses for referrals". This project adds the missing layer and keeps **Adapty as the system of record**: this service only holds a throwaway index of who used the demo, because Adapty's API can't list profiles.
 
@@ -45,7 +45,7 @@ Adapty allows 30 attributes per profile and 50 characters per value; the invite 
 
 | URL | For | Login |
 |---|---|---|
-| `/app` | The phone app: installable to the home screen, copyable invite links | none (each phone signs in by email) |
+| `/app` | The phone app: installable to the home screen, native mobile sharing with clipboard fallback; desktop copies invite links | none (each phone signs in by email) |
 | `/r/<CODE>` | Invite link: install instructions per platform, passes the code into the app | none |
 | `/download/lumen.apk` | Android app (PWABuilder package of `/app`) | none |
 | `/dashboard` | App owner's view, styled as a proposed **Referrals** section of Adapty; every other menu item opens the real Adapty dashboard | `ADMIN_PASSWORD` |

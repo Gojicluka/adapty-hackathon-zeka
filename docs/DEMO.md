@@ -9,7 +9,7 @@
 ## Script (about 3 minutes)
 
 1. **Dashboard → Program**: "The owner decides what a referral earns. These rules are stored in Adapty, as the remote config of a settings paywall."
-2. **Phone 1**: sign up → *Refer a friend* → link copied → paste into a message and send.
+2. **Phone 1**: sign up → *Refer a friend* → choose a messaging app and send (if native sharing is unavailable, paste the copied link into a message).
 3. **Phone 2**: open the link → install → open. "The invite is applied; Adapty's segment *Referred users* gives them the *Referral welcome* paywall, with copy from its remote config."
 4. **Phone 2**: subscribe (demo purchase, recorded as an App Store / Google Play transaction in Adapty).
 5. **Phone 1** (pull to refresh after ~2 s): "Adapty's webhook told us the friend paid; the inviter got 14 days of premium and moved to tier bronze."
