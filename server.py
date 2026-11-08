@@ -65,7 +65,7 @@ def load_env():
     env = {}
     path = ROOT / ".env"
     if path.exists():
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
@@ -729,7 +729,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"ok": True, "mode": "mock" if ADAPTY.mock else "live", "webhook": bool(WEBHOOK_SECRET)})
         if path == "/app":
             ref = clean_code(params.get("ref"))
-            page = (STATIC / "app.html").read_text()
+            page = (STATIC / "app.html").read_text(encoding="utf-8")
             if ref:
                 page = page.replace('href="/manifest.webmanifest"', f'href="/manifest.webmanifest?ref={ref}"')
             return self._send(200, page, "text/html; charset=utf-8")
@@ -738,7 +738,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/manifest.webmanifest":
             return self._send(200, manifest(clean_code(params.get("ref"))), "application/manifest+json")
         if path == "/.well-known/assetlinks.json":
-            raw = ENV.get("ASSETLINKS_JSON") or ((STATIC / "assetlinks.json").read_text()
+            raw = ENV.get("ASSETLINKS_JSON") or ((STATIC / "assetlinks.json").read_text(encoding="utf-8")
                                                  if (STATIC / "assetlinks.json").exists() else "[]")
             return self._send(200, raw, "application/json")
         if path.startswith("/static/"):
@@ -757,7 +757,7 @@ class Handler(BaseHTTPRequestHandler):
                 inv = link_opened(code, self._ip())
             except Problem:
                 inv = None
-            page = (STATIC / "invite.html").read_text()
+            page = (STATIC / "invite.html").read_text(encoding="utf-8")
             page = (page.replace("{{CODE}}", code)
                         .replace("{{NAME}}", re.sub(r"[<>&\"']", "", inv["name"]) if inv else "A friend")
                         .replace("{{VALID}}", "1" if inv else "0")

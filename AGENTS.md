@@ -24,6 +24,8 @@ Team Zeka, Adapty Hackathon Belgrade, 7–8 November 2026. Code freeze **Sunday 
 | `static/invite.html` | Invite landing page `/r/<CODE>` |
 | `static/lumen.apk`, `static/assetlinks.json` | Android wrapper of `/app` (PWABuilder) and its Digital Asset Links |
 | `scripts/smoke_test.py` | End-to-end check of signup → referral → purchase → reward |
+| `tests/test_referrals.py` | Unit tests for identity, program validation, rules engine, caps, once-only payouts, webhook (always mock Adapty) |
+| `AI_LOG.md` | How the team used AI: tools, setup, prompts, what went wrong |
 | `render.yaml` | Render service definition |
 | `.github/workflows/deploy.yml` | CI: compile + smoke test in mock mode, then trigger the Render deploy on `main` |
 | `.github/workflows/keepalive.yml` | Pings `/healthz` every 10 minutes so Render's free plan doesn't sleep |
@@ -36,6 +38,7 @@ Read `docs/ARCHITECTURE.md` before changing flows, `docs/ADAPTY_SETUP.md` before
 ```bash
 python3 server.py                                  # mock mode (no keys needed), http://localhost:8080
 python3 scripts/smoke_test.py http://localhost:8080 # must print "ALL CHECKS PASSED"
+python3 -m unittest discover -s tests              # unit tests; never call Adapty, safe with a live .env
 ```
 
 - **Live mode locally:** put the sandbox app's secret key in `.env` (see `docs/OPERATIONS.md`). Local servers don't receive Adapty's webhook; inviter rewards then come from the 25-second fallback.
