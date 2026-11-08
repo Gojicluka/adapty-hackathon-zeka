@@ -4,7 +4,7 @@ Read this before building on the project. Ordered roughly by how likely it is to
 
 ## Working as a team
 
-- **Every merge to `main` redeploys and empties the demo index** (dashboard users list, invite clicks, activity). Adapty data survives; users reappear when they sign in again. Batch merges, use pull requests, and **freeze `main` before the demo**.
+- **Every merge to `main` redeploys and empties the demo index** (dashboard users list, invite clicks, activity). Adapty data survives; users reappear when they sign in again. Work on a separate branch for every feature or fix (team decision), batch merges through pull requests, and **freeze `main` before the demo**.
 - **One big file each.** `server.py`, `static/app.html` and `static/dashboard.html` hold most of the logic, so parallel edits conflict. Agree who owns which file/feature, keep PRs small, rebase often.
 - **CI only tests mock mode.** Adapty-specific failures (wrong field types, locked paywalls, unregistered attributes) only show up live. After a deploy, check `/healthz`, the dashboard's "Adapty API calls" panel, or ask Teodor for Render log lines starting with `Adapty ... ->`.
 - **Pushing workflow files** (`.github/workflows/*`) fails over HTTPS with the default `gh` token ("without `workflow` scope"). Use an SSH remote or `gh auth refresh -s workflow`.
