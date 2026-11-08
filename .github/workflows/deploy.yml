@@ -20,7 +20,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile
-        run: python -m py_compile server.py adapty_client.py scripts/smoke_test.py
+        run: python -m py_compile server.py adapty_client.py scripts/smoke_test.py tests/test_referrals.py
+      - name: Unit tests (rules engine, identity, webhook; mock Adapty)
+        run: python -m unittest discover -s tests -v
       - name: Smoke test in mock mode
         env:
           PORT: "8080"
